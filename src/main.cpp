@@ -89,6 +89,43 @@ public:
         return (double)ee2410.bf.a_PTAT_EE / 4.0 + 8.0;
     }
 
+    double get_K_V_PTAT(){
+        union {
+            uint16_t word_;
+            struct bitfield_ee2432 {
+                uint8_t K_T_PTAT_l8: 8;
+                uint8_t K_T_PTAT_u2: 2;
+                int8_t K_V_PTAT_EE: 6;
+            } bf;
+        } ee2432;
+        ee2432.word_ = fetch_EE_address(0x2432);
+        return (double)ee2432.bf.K_V_PTAT_EE / (double)(1 << 12);
+    }
+
+    double get_K_T_PTAT(){
+        union {
+            uint16_t word_;
+            struct bitfield_ee2432 {
+                uint8_t K_T_PTAT_l8: 8;
+                uint8_t K_T_PTAT_u2: 2;
+                int8_t K_V_PTAT_EE: 6;
+            } bf;
+        } ee2432;
+        ee2432.word_ = fetch_EE_address(0x2432);
+        int K_T_PTAT_EE = (ee2432.bf.K_T_PTAT_u2 << 8)
+                            | (ee2432.bf.K_T_PTAT_l8);
+        return (double)K_T_PTAT_EE / 8.0;
+    }
+
+    int16_t get_V_PTAT_25(){
+        union {
+            uint16_t word_;
+            int16_t V_PTAT_25;
+        } ee2431;
+        ee2431.word_ = fetch_EE_address(0x2431);
+        return ee2431.V_PTAT_25;
+    }
+
 };
 
 class regmap{
@@ -193,6 +230,11 @@ int main() {
 	printf("K_Vdd_EE is %hhd, Vdd_25_EE is %hhu\n", K_Vdd_EE, Vdd_25_EE);
 	double a_PTAT = nv.get_a_PTAT();
 	printf("a_PTAT is %lf\n", a_PTAT);
+	double K_V_PTAT = nv.get_K_V_PTAT();
+	double K_T_PTAT = nv.get_K_T_PTAT();
+	int16_t V_PTAT_25 = nv.get_V_PTAT_25();
+	printf("EE[2432] is %04hX\n", nv.fetch_EE_address(0x2432));
+	printf("K_V_PTAT is %lf, K_T_PTAT is %lf, V_PTAT_25 is %hd\n", K_V_PTAT, K_T_PTAT, V_PTAT_25);
 
 	regmap ram = regmap();
 	ram.open_path("/home/USER/mlx/mlx_v4l2_raw_frames");
@@ -211,6 +253,9 @@ int main() {
 
 	    double V_PTAT_art = (double)(1 << 18) / (a_PTAT + (double)V_BE / (double)V_PTAT);
 	    printf("V_BE, V_PTAT, V_PTAT_art: %hd, %hd, %lf\n", V_BE, V_PTAT, V_PTAT_art);
+
+	    double dTa = (V_PTAT_art / (1.0 + K_V_PTAT * dV) - V_PTAT_25) / K_T_PTAT;
+	    printf("dTa: %lf\n", dTa);
 	}
 
     printf("closing\n");
