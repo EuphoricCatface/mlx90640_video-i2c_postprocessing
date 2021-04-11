@@ -75,7 +75,19 @@ public:
         return ee2433.bf.Vdd_25_EE;
     }
 
-
+    double get_a_PTAT(){
+        union {
+            uint16_t word_;
+            struct bitfield_ee2410 {
+                uint8_t scale_Occ_rem: 4;
+                uint8_t scale_Occ_col: 4;
+                uint8_t scale_Occ_row: 4;
+                uint8_t a_PTAT_EE: 4;
+            } bf;
+        } ee2410;
+        ee2410.word_ = fetch_EE_address(0x2410);
+        return (double)ee2410.bf.a_PTAT_EE / 4.0 + 8.0;
+    }
 
 };
 
@@ -144,6 +156,26 @@ public:
         ram072A.word_ = fetch_RAM_address(0x072A);
         return ram072A.dV_raw;
     }
+
+    short get_V_PTAT(){
+        union {
+            uint16_t word_;
+            int16_t V_PTAT;
+        } ram0720;
+
+        ram0720.word_ = fetch_RAM_address(0x0720);
+        return ram0720.V_PTAT;
+    }
+
+    short get_V_BE(){
+        union {
+            uint16_t word_;
+            int16_t V_BE;
+        } ram0700;
+
+        ram0700.word_ = fetch_RAM_address(0x0700);
+        return ram0700.V_BE;
+    }
 };
 
 
@@ -159,6 +191,8 @@ int main() {
 	uint8_t Vdd_25_EE = nv.get_Vdd_25_EE();
 	int8_t K_Vdd_EE = nv.get_K_Vdd_EE();
 	printf("K_Vdd_EE is %hhd, Vdd_25_EE is %hhu\n", K_Vdd_EE, Vdd_25_EE);
+	double a_PTAT = nv.get_a_PTAT();
+	printf("a_PTAT is %lf\n", a_PTAT);
 
 	regmap ram = regmap();
 	ram.open_path("/home/USER/mlx/mlx_v4l2_raw_frames");
@@ -171,6 +205,12 @@ int main() {
 	    printf("dV_raw is %04hX, ", dV_raw);
 	    double dV = (double)(-((int)Vdd_25_EE << 5) + dV_raw + 16384) / (double) K_Vdd_EE / 32.0;
 	    printf("dV: %lf\n", dV);
+
+	    int16_t V_BE = ram.get_V_BE();
+	    int16_t V_PTAT = ram.get_V_PTAT();
+
+	    double V_PTAT_art = (double)(1 << 18) / (a_PTAT + (double)V_BE / (double)V_PTAT);
+	    printf("V_BE, V_PTAT, V_PTAT_art: %hd, %hd, %lf\n", V_BE, V_PTAT, V_PTAT_art);
 	}
 
     printf("closing\n");
