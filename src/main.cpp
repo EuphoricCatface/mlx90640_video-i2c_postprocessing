@@ -4,6 +4,7 @@
 #include <unistd.h>
 #include <endian.h>
 
+#include "memory_mlx90640.hpp"
 class nvram{
 public:
     nvram() {}
