@@ -14,7 +14,7 @@ public:
     nvram() {}
     ~nvram() {}
 private:
-    unsigned short nvram_[0x400];
+    mlx90640_nvmem_ nvram_;
     ssize_t rdsz_;
 
     const int OFFSET = 0x2400;
@@ -24,7 +24,7 @@ public:
         int fd = open(path, O_RDONLY);
         if(fd == -1)
             return false;
-        rdsz_ = read(fd, (unsigned char *)nvram_,
+        rdsz_ = read(fd, (unsigned char *)(nvram_.word_),
 	        sizeof(nvram_) / sizeof(char));
     	std::cout << rdsz_ << " bytes read\n";
     	close(fd);
@@ -35,7 +35,7 @@ public:
         for(int i=0; i<rdsz_; i++)
 	    {
 	        char buffer[5];
-	        std::snprintf(buffer, 5, "%04hX", nvram_[i]);
+	        std::snprintf(buffer, 5, "%04hX", nvram_.word_[i]);
 	        std::cout << buffer;
 	        if(i % 16 == 15)
 	            std::cout << "\n";
@@ -49,7 +49,7 @@ public:
             printf("bad EE addr, %d.\n", address);
             return 0;
         }
-        return le16toh(nvram_[address - OFFSET]);
+        return le16toh(nvram_.word_[address - OFFSET]);
     }
 
     int8_t get_K_Vdd_EE(){
@@ -141,7 +141,7 @@ public:
     ~regmap() {}
 
 private:
-    unsigned short regmap_[0x340];
+    mlx90640_ram_ regmap_;
     ssize_t rdsz_;
 
     const int OFFSET = 0x400;
@@ -159,7 +159,7 @@ public:
     }
 
     bool read_mem(){
-        rdsz_ = read(fd_, (unsigned char *)regmap_,
+        rdsz_ = read(fd_, (unsigned char *)(regmap_.word_),
 	        sizeof(regmap_) / sizeof(char));
     	if(rdsz_ != 0x680) {
     	    std::cout << "A frame did not reach its full size.\n";
@@ -172,7 +172,7 @@ public:
         for(int i=0; i<rdsz_; i++)
 	    {
 	        char buffer[5];
-	        std::snprintf(buffer, 5, "%04hX", regmap_[i]);
+	        std::snprintf(buffer, 5, "%04hX", regmap_.word_[i]);
 	        std::cout << buffer;
 	        if(i % 16 == 15)
 	            std::cout << "\n";
@@ -186,37 +186,19 @@ public:
             printf("bad RAM addr, %d\n", address);
             return 0;
         }
-        return le16toh(regmap_[address - OFFSET]);
+        return le16toh(regmap_.word_[address - OFFSET]);
     }
 
     short get_dV_raw(){
-        union {
-            uint16_t word_;
-            int16_t dV_raw;
-        } ram072A;
-
-        ram072A.word_ = fetch_RAM_address(0x072A);
-        return ram072A.dV_raw;
+        return regmap_.named_.VDD_raw;
     }
 
     short get_V_PTAT(){
-        union {
-            uint16_t word_;
-            int16_t V_PTAT;
-        } ram0720;
-
-        ram0720.word_ = fetch_RAM_address(0x0720);
-        return ram0720.V_PTAT;
+        return regmap_.named_.Ta_PTAT; // p18 says Ta_PTAT but p23 says V_PTAT
     }
 
     short get_V_BE(){
-        union {
-            uint16_t word_;
-            int16_t V_BE;
-        } ram0700;
-
-        ram0700.word_ = fetch_RAM_address(0x0700);
-        return ram0700.V_BE;
+        return regmap_.named_.V_BE;
     }
 };
 
