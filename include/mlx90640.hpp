@@ -9,33 +9,38 @@
 
 #include "memory_mlx90640.hpp"
 
-class nvram{
+class mlx90640 {
 public:
-    nvram() {}
-    ~nvram() {}
+	mlx90640() { ram_fd = -1; };
+	~mlx90640() {};
+
 private:
-    mlx90640_nvmem_ nvram_;
-    ssize_t rdsz_;
+	mlx90640_nvmem_ ee;
 
-    const int OFFSET = 0x2400;
+	mlx90640_ram_ ram;
+	ssize_t ram_fd;
 
-public:
-    bool read_mem(const char * path) {
-        int fd = open(path, O_RDONLY);
-        if(fd == -1)
-            return false;
-        rdsz_ = read(fd, (unsigned char *)(nvram_.word_),
-	        sizeof(nvram_) / sizeof(char));
-    	std::cout << rdsz_ << " bytes read\n";
-    	close(fd);
-    	return true;
-    }
+private:
+	int K_Vdd_EE;
+	int Vdd_25_EE;
+	double a_PTAT;
+	double K_V_PTAT;
+	double K_T_PTAT;
+	int V_PTAT_25;
 
-    void print(void) {
-        for(int i=0; i<rdsz_; i++)
+public: // temporary for debug
+	int get_K_Vdd_EE() {return K_Vdd_EE;}
+	int get_Vdd25_EE() {return Vdd_25_EE;}
+	double get_a_PTAT() {return a_PTAT;}
+	double get_K_V_PTAT() {return K_V_PTAT;}
+	double get_K_T_PTAT() {return K_T_PTAT;}
+	int get_V_PTAT_25() {return V_PTAT_25;}
+
+    void print_ee(void) {
+        for(int i=0; i<0x340; i++)
 	    {
 	        char buffer[5];
-	        std::snprintf(buffer, 5, "%04hX", nvram_.word_[i]);
+	        std::snprintf(buffer, 5, "%04hX", ee.word_[i]);
 	        std::cout << buffer;
 	        if(i % 16 == 15)
 	            std::cout << "\n";
@@ -44,93 +49,76 @@ public:
 	    }
     }
 
+private:
+	bool read_ee(const char * path) {
+		int fd = open(path, O_RDONLY);
+        if(fd == -1)
+            return false;
+        ssize_t rdsz_ = read(fd, (unsigned char *)(ee.word_),
+	        sizeof(ee) / sizeof(char));
+    	std::cout << rdsz_ << " bytes read\n";
+    	close(fd);
+    	return true;
+    }
+
     unsigned short fetch_EE_address(int address){
-        if(address < 0x2400 || address > 0x273F){
+		const int OFFSET = 0x2400;
+
+        if(address < OFFSET || address > OFFSET + 0x33F){
+        //if(address < OFFSET || address >= OFFSET + 0x340){
             printf("bad EE addr, %d.\n", address);
             return 0;
         }
-        return le16toh(nvram_.word_[address - OFFSET]);
+        return le16toh(ee.word_[address - OFFSET]);
     }
 
-    int8_t get_K_Vdd_EE(){
+public:
+    bool init_ee(const char * path) {
+		bool rtn = read_ee(path);
+		if(rtn == false)
+			return false;
+
         union {
             uint16_t word_;
             struct bitfield_ee2433 {
-                uint8_t Vdd_25_EE : 8;
-                int8_t K_Vdd_EE : 8;
+                unsigned int Vdd_25_EE : 8;
+                int K_Vdd_EE : 8;
             } bf;
         } ee2433;
         ee2433.word_ = fetch_EE_address(0x2433);
-        return ee2433.bf.K_Vdd_EE;
-    }
+        Vdd_25_EE = ee2433.bf.Vdd_25_EE;
+        K_Vdd_EE = ee2433.bf.K_Vdd_EE;
 
-    uint8_t get_Vdd_25_EE(){
-        union {
-            uint16_t word_;
-            struct bitfield_ee2433 {
-                uint8_t Vdd_25_EE : 8;
-                int8_t K_Vdd_EE : 8;
-            } bf;
-            // uint8_t arr[2];
-        } ee2433;
-        ee2433.word_ = fetch_EE_address(0x2433);
-
-	    // printf("bf is %d, arr is %d\n", ee2433.bf.Vdd_25_EE, ee2433.arr[0]);
-	    // confirming bitfield works. Tested on ARM
-        return ee2433.bf.Vdd_25_EE;
-    }
-
-    double get_a_PTAT(){
         union {
             uint16_t word_;
             struct bitfield_ee2410 {
-                uint8_t scale_Occ_rem: 4;
-                uint8_t scale_Occ_col: 4;
-                uint8_t scale_Occ_row: 4;
-                uint8_t a_PTAT_EE: 4;
+                unsigned int scale_Occ_rem: 4;
+                unsigned int scale_Occ_col: 4;
+                unsigned int scale_Occ_row: 4;
+                unsigned int a_PTAT_EE: 4;
             } bf;
         } ee2410;
         ee2410.word_ = fetch_EE_address(0x2410);
-        return (double)ee2410.bf.a_PTAT_EE / 4.0 + 8.0;
-    }
+        a_PTAT = (double)ee2410.bf.a_PTAT_EE / 4.0 + 8.0;
 
-    double get_K_V_PTAT(){
         union {
             uint16_t word_;
             struct bitfield_ee2432 {
-                uint8_t K_T_PTAT_l8: 8;
-                uint8_t K_T_PTAT_u2: 2;
-                int8_t K_V_PTAT_EE: 6;
+                unsigned int K_T_PTAT_l8: 8;
+                unsigned int K_T_PTAT_u2: 2;
+                int K_V_PTAT_EE: 6;
             } bf;
         } ee2432;
         ee2432.word_ = fetch_EE_address(0x2432);
-        return (double)ee2432.bf.K_V_PTAT_EE / (double)(1 << 12);
-    }
-
-    double get_K_T_PTAT(){
-        union {
-            uint16_t word_;
-            struct bitfield_ee2432 {
-                uint8_t K_T_PTAT_l8: 8;
-                uint8_t K_T_PTAT_u2: 2;
-                int8_t K_V_PTAT_EE: 6;
-            } bf;
-        } ee2432;
-        ee2432.word_ = fetch_EE_address(0x2432);
+        K_V_PTAT = (double)ee2432.bf.K_V_PTAT_EE / (double)(1 << 12);
         int K_T_PTAT_EE = (ee2432.bf.K_T_PTAT_u2 << 8)
                             | (ee2432.bf.K_T_PTAT_l8);
-        return (double)K_T_PTAT_EE / 8.0;
-    }
+        K_T_PTAT = (double)K_T_PTAT_EE / 8.0;
 
-    int16_t get_V_PTAT_25(){
-        union {
-            uint16_t word_;
-            int16_t V_PTAT_25;
-        } ee2431;
-        ee2431.word_ = fetch_EE_address(0x2431);
-        return ee2431.V_PTAT_25;
-    }
+        V_PTAT_25 = ee.named.PTAT_25;
 
+        return true;
+    }
 };
 
 class regmap{

@@ -12,24 +12,25 @@
 int main() {
 	std::cout << "Hello World\n";
 
-	nvram nv = nvram();
-	nv.read_mem("/home/USER/mlx/nvmem");
-	nv.print();
+	mlx90640 nv = mlx90640();
+	nv.init_ee("/home/USER/mlx/nvmem");
+	nv.print_ee();
 
-	printf("EE[2433] is %04hX\n", nv.fetch_EE_address(0x2433));
-	uint8_t Vdd_25_EE = nv.get_Vdd_25_EE();
-	int8_t K_Vdd_EE = nv.get_K_Vdd_EE();
+	// printf("EE[2433] is %04hX\n", nv.fetch_EE_address(0x2433));
+	unsigned int Vdd_25_EE = nv.get_Vdd25_EE();
+	int K_Vdd_EE = nv.get_K_Vdd_EE();
 	printf("K_Vdd_EE is %hhd, Vdd_25_EE is %hhu\n", K_Vdd_EE, Vdd_25_EE);
 	double a_PTAT = nv.get_a_PTAT();
 	printf("a_PTAT is %lf\n", a_PTAT);
 	double K_V_PTAT = nv.get_K_V_PTAT();
 	double K_T_PTAT = nv.get_K_T_PTAT();
-	int16_t V_PTAT_25 = nv.get_V_PTAT_25();
-	printf("EE[2432] is %04hX\n", nv.fetch_EE_address(0x2432));
+	int V_PTAT_25 = nv.get_V_PTAT_25();
+	// printf("EE[2432] is %04hX\n", nv.fetch_EE_address(0x2432));
 	printf("K_V_PTAT is %lf, K_T_PTAT is %lf, V_PTAT_25 is %hd\n", K_V_PTAT, K_T_PTAT, V_PTAT_25);
 
 	regmap ram = regmap();
-	ram.open_path("/home/USER/mlx/mlx_v4l2_raw_frames");
+	//ram.open_path("/dev/video0");
+	ram.open_path("/home/USER/mlx/filesinkdump");
 
 	while(1){
 	    if(!ram.read_mem())
