@@ -95,20 +95,20 @@ union mlx90640_ram_ {
     struct {
         uint16_t ram_PIX [0x300]; // 0x400
 
-        uint16_t V_BE; // 0x700
+        int16_t V_BE; // 0x700
         uint16_t _0 [0x7];
-        uint16_t CP_SP0; // 0x708
+        int16_t CP_SP0; // 0x708
         uint16_t _1;
-        uint16_t ram_GAIN; // 0x70a
+        int16_t ram_GAIN; // 0x70a
         uint16_t _2 [0x5];
 
         uint16_t _3 [0x10]; // 0x710
 
-        uint16_t Ta_PTAT; // 0x720
+        int16_t Ta_PTAT; // 0x720
         uint16_t _4 [0x7];
-        uint16_t CP_SP1; // 0x728
+        int16_t CP_SP1; // 0x728
         uint16_t _5;
-        uint16_t VDD_raw; // 0x72A
+        int16_t VDD_raw; // 0x72A
         uint16_t _6 [0x5];
 
         uint16_t _7 [0x10]; // 0x730
