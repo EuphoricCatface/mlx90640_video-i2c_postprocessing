@@ -11,16 +11,12 @@
 
 class mlx90640 {
 public:
-	mlx90640() { ram_fd = -1; };
-	~mlx90640() {};
+	mlx90640() { ram_fd = -1; }
+	~mlx90640() { close_frame_file(); }
 
 private:
 	mlx90640_nvmem_ ee;
 
-	mlx90640_ram_ ram;
-	ssize_t ram_fd;
-
-private:
 	int K_Vdd_EE;
 	int Vdd_25_EE;
 	double a_PTAT;
@@ -130,36 +126,35 @@ public:
 
         return true;
     }
-};
+private:
+	mlx90640_ram_ ram;
+	ssize_t ram_fd;
 
-class regmap{
-public:
-    regmap() {
-        fd_ = -1;
-    }
-    ~regmap() {}
+	int VDD_raw;
+	int V_PTAT;
+	int V_BE;
+
+public: // temporary for debug
+	int get_VDD_raw() {return VDD_raw;}
+	int get_V_PTAT() {return V_PTAT;}
+	int get_V_BE() {return V_BE;}
 
 private:
-    mlx90640_ram_ regmap_;
-    ssize_t rdsz_;
-
-    const int OFFSET = 0x400;
-    int fd_;
-public:
-    bool open_path(const char * path){
-        fd_ = open(path, O_RDONLY);
-        if(fd_ == -1)
+	bool open_frame_file(const char * path){
+        ram_fd = open(path, O_RDONLY);
+        if(ram_fd == -1)
             return false;
         return true;
     }
 
-    void close_path() {
-        close(fd_);
+    void close_frame_file(){
+    	if(ram_fd != -1)
+    		close(ram_fd);
     }
 
-    bool read_mem(){
-        rdsz_ = read(fd_, (unsigned char *)(regmap_.word_),
-	        sizeof(regmap_) / sizeof(char));
+    bool read_frame_file(){
+        int rdsz_ = read(ram_fd, (unsigned char *)(ram.word_),
+	        sizeof(ram) / sizeof(char));
     	if(rdsz_ != 0x680) {
     	    std::cout << "A frame did not reach its full size.\n";
     	    return false;
@@ -167,38 +162,29 @@ public:
     	return true;
     }
 
-    void print(void) {
-        for(int i=0; i<rdsz_; i++)
-	    {
-	        char buffer[5];
-	        std::snprintf(buffer, 5, "%04hX", regmap_.word_[i]);
-	        std::cout << buffer;
-	        if(i % 16 == 15)
-	            std::cout << "\n";
-	        else
-	            std::cout << " ";
-	    }
-    }
-
     unsigned short fetch_RAM_address(int address){
-        if(address < 0x400 || address > 0x73F){
+    	const int OFFSET = 0x400;
+        if(address < OFFSET || address > OFFSET + 0x340){
             printf("bad RAM addr, %d\n", address);
             return 0;
         }
-        return le16toh(regmap_.word_[address - OFFSET]);
+        return le16toh(ram.word_[address - OFFSET]);
     }
 
-    short get_dV_raw(){
-        return regmap_.named_.VDD_raw;
-    }
+public:
+	bool init_frame_file(const char * path){
+		return open_frame_file(path);
+	}
 
-    short get_V_PTAT(){
-        return regmap_.named_.Ta_PTAT; // p18 says Ta_PTAT but p23 says V_PTAT
-    }
+	bool process_frame_file(){
+		if(!read_frame_file())
+			return false;
 
-    short get_V_BE(){
-        return regmap_.named_.V_BE;
-    }
+		VDD_raw = ram.named.VDD_raw;
+		V_PTAT = ram.named.Ta_PTAT; // p18 says Ta_PTAT but p23 says V_PTAT
+		V_BE = ram.named.V_BE;
+		return true;
+	}
 };
 
 #endif // __MLX90640_H__

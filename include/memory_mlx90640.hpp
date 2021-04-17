@@ -46,11 +46,11 @@ union ACC_COL_ {
 union ee_PIX_ {
     uint16_t word_;
     struct {
-        bool outlier            : 1;
-        int8_t K_Ta                : 3;
+        bool outlier       : 1;
+        int8_t K_Ta        : 3;
         uint8_t PIX_a_l4   : 4;
         uint8_t PIX_a_h2   : 2;
-        int8_t PIX_OFF             : 6;
+        int8_t PIX_OFF     : 6;
     } bf;
 };
 
@@ -112,7 +112,7 @@ union mlx90640_ram_ {
         uint16_t _6 [0x5];
 
         uint16_t _7 [0x10]; // 0x730
-    } named_;
+    } named;
 };
 
 #endif // __MEMORY_MLX90640_H__
