@@ -24,6 +24,8 @@ private:
 	double K_T_PTAT;
 	int V_PTAT_25;
 
+	int offset_ref[0x300];
+
 public: // temporary for debug
 	int get_K_Vdd_EE() {return K_Vdd_EE;}
 	int get_Vdd25_EE() {return Vdd_25_EE;}
@@ -123,6 +125,37 @@ public:
         K_T_PTAT = (double)K_T_PTAT_EE / 8.0;
 
         V_PTAT_25 = ee.named.PTAT_25;
+
+		printf(" == offset == \n");
+        int offset_avg = ee.named.PIX_OS_AVG;
+        unsigned offset_row_scale = ee2410.bf.scale_Occ_row;
+        unsigned offset_col_scale = ee2410.bf.scale_Occ_col;
+        unsigned offset_rem_scale = ee2410.bf.scale_Occ_rem;
+        int offset_row[24];
+        int offset_col[32];
+        for(int row_ = 0; row_ < 24/4; row_++){
+			offset_row[4*row_] = ee.named.OCC_ROW[row_].bf.OCC_ROW_1_;
+			offset_row[4*row_+1] = ee.named.OCC_ROW[row_].bf.OCC_ROW_2_;
+			offset_row[4*row_+2] = ee.named.OCC_ROW[row_].bf.OCC_ROW_3_;
+			offset_row[4*row_+3] = ee.named.OCC_ROW[row_].bf.OCC_ROW_4_;
+		}
+    	for(int col_ = 0; col_ < 32/4; col_++){
+			offset_col[4*col_] = ee.named.OCC_COL[col_].bf.OCC_COL_1_;
+			offset_col[4*col_+1] = ee.named.OCC_COL[col_].bf.OCC_COL_2_;
+			offset_col[4*col_+2] = ee.named.OCC_COL[col_].bf.OCC_COL_3_;
+			offset_col[4*col_+3] = ee.named.OCC_COL[col_].bf.OCC_COL_4_;
+    	}
+    	for(int row = 0; row < 24; row++){
+    		for(int col = 0; col < 32; col++){
+				offset_ref[row * 32 + col] =
+					offset_avg +
+					(offset_row[row] << offset_row_scale) +
+					(offset_col[col] << offset_col_scale) +
+					(ee.named.ee_PIX[row * 32 + col].bf.PIX_OFF << offset_rem_scale);
+				printf("%02X ", offset_ref[row * 32 + col] & 0x00FF); // the values didn't get too big
+    		}
+    		printf("\n");
+    	}
 
         return true;
     }
