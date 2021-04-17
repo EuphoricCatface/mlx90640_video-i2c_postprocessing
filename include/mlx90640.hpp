@@ -37,6 +37,17 @@ public: // temporary for debug
 	int get_V_PTAT_25() {return V_PTAT_25;}
 
     void print_ee(void) {
+    	std::printf("size of ee.word: %d\n", (int)sizeof(ee.word_));
+    	std::printf("size of ee.named: %d\n", (int)sizeof(ee.named));
+    	std::printf("address of ee.word: %u\n", (unsigned)ee.word_);
+    	std::printf("address of ee.named: %u\n", (unsigned)&(ee.named));
+    	std::printf("%u %u %u %u %u\n",
+    		(unsigned)ee.named.ee_conf,
+    		(unsigned)&(ee.named.ee_2410),
+    		(unsigned)&(ee.named.ee_2420),
+    		(unsigned)&(ee.named.ee_GAIN),
+    		(unsigned)ee.named.ee_PIX);
+
         for(int i=0; i<0x340; i++)
 	    {
 	        char buffer[5];

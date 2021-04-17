@@ -6,40 +6,40 @@
 union OCC_ROW_ {
     uint16_t word_;
     struct {
-        int OCC_ROW_1_ : 4;
-        int OCC_ROW_2_ : 4;
-        int OCC_ROW_3_ : 4;
-        int OCC_ROW_4_ : 4;
+        int8_t OCC_ROW_1_ : 4;
+        int8_t OCC_ROW_2_ : 4;
+        int8_t OCC_ROW_3_ : 4;
+        int8_t OCC_ROW_4_ : 4;
     } bf;
 };
 
 union OCC_COL_ {
     uint16_t word_;
     struct {
-        int OCC_COL_1_ : 4;
-        int OCC_COL_2_ : 4;
-        int OCC_COL_3_ : 4;
-        int OCC_COL_4_ : 4;
+        int8_t OCC_COL_1_ : 4;
+        int8_t OCC_COL_2_ : 4;
+        int8_t OCC_COL_3_ : 4;
+        int8_t OCC_COL_4_ : 4;
     } bf;
 };
 
 union ACC_ROW_ {
     uint16_t word_;
     struct {
-        int ACC_ROW_1_ : 4;
-        int ACC_ROW_2_ : 4;
-        int ACC_ROW_3_ : 4;
-        int ACC_ROW_4_ : 4;
+        int8_t ACC_ROW_1_ : 4;
+        int8_t ACC_ROW_2_ : 4;
+        int8_t ACC_ROW_3_ : 4;
+        int8_t ACC_ROW_4_ : 4;
     } bf;
 };
 
 union ACC_COL_ {
     uint16_t word_;
     struct {
-        int ACC_COL_1_ : 4;
-        int ACC_COL_2_ : 4;
-        int ACC_COL_3_ : 4;
-        int ACC_COL_4_ : 4;
+        int8_t ACC_COL_1_ : 4;
+        int8_t ACC_COL_2_ : 4;
+        int8_t ACC_COL_3_ : 4;
+        int8_t ACC_COL_4_ : 4;
     } bf;
 };
 
@@ -47,10 +47,10 @@ union ee_PIX_ {
     uint16_t word_;
     struct {
         bool outlier            : 1;
-        int K_Ta                : 3;
-        unsigned int PIX_a_l4   : 4;
-        unsigned int PIX_a_h2   : 2;
-        int PIX_OFF             : 6;
+        int8_t K_Ta                : 3;
+        uint8_t PIX_a_l4   : 4;
+        uint8_t PIX_a_h2   : 2;
+        int8_t PIX_OFF             : 6;
     } bf;
 };
 
