@@ -128,7 +128,7 @@ public:
     }
 private:
 	mlx90640_ram_ ram;
-	ssize_t ram_fd;
+	int ram_fd;
 
 	int VDD_raw;
 	int V_PTAT;
