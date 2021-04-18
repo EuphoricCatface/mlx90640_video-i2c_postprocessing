@@ -27,6 +27,9 @@ private:
 	int offset_ref[0x300];
 	double a_ref[0x300];
 
+	int gain_ee;
+	double K_V[2][2];
+
 public: // temporary for debug
 	int get_K_Vdd_EE() {return K_Vdd_EE;}
 	int get_Vdd25_EE() {return Vdd_25_EE;}
@@ -126,6 +129,38 @@ public:
         K_T_PTAT = (double)K_T_PTAT_EE / 8.0;
 
         V_PTAT_25 = ee.named.PTAT_25;
+
+        gain_ee = ee.named.ee_GAIN;
+
+        printf(" == K_V <2x2> == \n");
+
+        union {
+        	uint16_t word_;
+        	struct {
+        		int8_t K_V_rOcO: 4; // datasheet says Even Even, but that's 1-based index
+        		int8_t K_V_rEcO: 4;
+        		int8_t K_V_rOcE: 4;
+        		int8_t K_V_rEcE: 4;
+        	} bf;
+        } ee2434;
+        ee2434.word_ = fetch_EE_address(0x2434);
+
+        union {
+        	uint16_t word_;
+        	struct {
+        		uint8_t _1 : 4;
+        		uint8_t K_V_scale : 4;
+        		uint8_t K_Ta_scale1 : 4;
+        		uint8_t K_Ta_scale2 : 4;
+        	} bf;
+        } ee2438;
+        ee2438.word_ = fetch_EE_address(0x2438);
+        unsigned K_V_scale = ee2438.bf.K_V_scale;
+
+        K_V[0][0] = (double)ee2434.bf.K_V_rEcE / (double)(1 << K_V_scale);
+        K_V[0][1] = (double)ee2434.bf.K_V_rEcO / (double)(1 << K_V_scale);
+        K_V[1][0] = (double)ee2434.bf.K_V_rOcE / (double)(1 << K_V_scale);
+        K_V[1][1] = (double)ee2434.bf.K_V_rOcO / (double)(1 << K_V_scale);
 
 		printf(" == offset == \n");
         int offset_avg = ee.named.PIX_OS_AVG;
