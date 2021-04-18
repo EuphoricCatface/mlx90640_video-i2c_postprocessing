@@ -25,6 +25,7 @@ private:
 	int V_PTAT_25;
 
 	int offset_ref[0x300];
+	double a_ref[0x300];
 
 public: // temporary for debug
 	int get_K_Vdd_EE() {return K_Vdd_EE;}
@@ -156,6 +157,62 @@ public:
     		}
     		printf("\n");
     	}
+
+		printf(" == alpha == \n");
+		union {
+            uint16_t word_;
+            struct bitfield_ee2420 {
+                unsigned int scale_Acc_rem: 4;
+                unsigned int scale_Acc_col: 4;
+                unsigned int scale_Acc_row: 4;
+                unsigned int a_scale_EE: 4;
+            } bf;
+        } ee2420;
+        ee2420.word_ = fetch_EE_address(0x2420);
+
+        unsigned a_avg = ee.named.PIX_SENS_AVG;
+        unsigned a_scale = ee2420.bf.a_scale_EE + 30;
+		unsigned a_row_scale = ee2420.bf.scale_Acc_row;
+		unsigned a_col_scale = ee2420.bf.scale_Acc_col;
+		unsigned a_rem_scale = ee2420.bf.scale_Acc_row;
+
+		printf("a_avg: %u\n", a_avg);
+		printf("a_scale: %u\n", a_scale);
+		printf("a_row_scale: %u\n", a_row_scale);
+		printf("a_col_scale: %u\n", a_col_scale);
+		printf("a_rem_scale: %u\n", a_rem_scale);
+
+		int a_row[24];
+		int a_col[32];
+		for(int row_ = 0; row_ < 24/4; row_++){
+			a_row[4*row_] = ee.named.ACC_ROW[row_].bf.ACC_ROW_1_;
+			a_row[4*row_+1] = ee.named.ACC_ROW[row_].bf.ACC_ROW_2_;
+			a_row[4*row_+2] = ee.named.ACC_ROW[row_].bf.ACC_ROW_3_;
+			a_row[4*row_+3] = ee.named.ACC_ROW[row_].bf.ACC_ROW_4_;
+		}
+		for(int col_ = 0; col_ < 32/4; col_++){
+			a_col[4*col_] = ee.named.ACC_COL[col_].bf.ACC_COL_1_;
+			a_col[4*col_+1] = ee.named.ACC_COL[col_].bf.ACC_COL_2_;
+			a_col[4*col_+2] = ee.named.ACC_COL[col_].bf.ACC_COL_3_;
+			a_col[4*col_+3] = ee.named.ACC_COL[col_].bf.ACC_COL_4_;
+		}
+		for(int row = 0; row < 24; row++){
+			for(int col = 0; col < 32; col++){
+				int a_rem = (ee.named.ee_PIX[row * 32 + col].word_ & 0x03f0) >> 4;
+				if(a_rem & 1<<5)
+					a_rem |= 0xffffffc0;
+				// printf("%02d ", a_rem);
+				// a_ref[row * 32 + col] =
+				int a_ref_int =
+					a_avg +
+					(a_row[row] << a_row_scale) +
+					(a_col[col] << a_col_scale) +
+					((a_rem) << a_rem_scale);
+				printf("%04X ", a_ref_int);
+				a_ref[row * 32 + col] = (double)a_ref_int / (double)a_scale;
+			}
+			printf("\n");
+		}
 
         return true;
     }
