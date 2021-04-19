@@ -253,7 +253,7 @@ public:
         unsigned a_scale = ee2420.bf.a_scale_EE + 30;
 		unsigned a_row_scale = ee2420.bf.scale_Acc_row;
 		unsigned a_col_scale = ee2420.bf.scale_Acc_col;
-		unsigned a_rem_scale = ee2420.bf.scale_Acc_row;
+		unsigned a_rem_scale = ee2420.bf.scale_Acc_rem;
 
 		printf("a_avg: %u\n", a_avg);
 		printf("a_scale: %u\n", a_scale);
