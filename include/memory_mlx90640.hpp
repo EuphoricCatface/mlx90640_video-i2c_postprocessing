@@ -93,7 +93,7 @@ union mlx90640_nvmem_ {
 union mlx90640_ram_ {
     uint16_t word_[0x340];
     struct {
-        uint16_t ram_PIX [0x300]; // 0x400
+        int16_t ram_PIX [0x300]; // 0x400
 
         int16_t V_BE; // 0x700
         uint16_t _0 [0x7];

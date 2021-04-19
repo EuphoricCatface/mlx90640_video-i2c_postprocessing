@@ -379,6 +379,7 @@ private:
 	double V_PTAT_art;
 	double dTa;
 	double gain;
+	double pix[0x300];
 
 public:
 	void process_data(){
@@ -391,6 +392,17 @@ public:
 	    printf("V_PTAT_art is %lf\n", V_PTAT_art);
 	    printf("dTa: %lf\n", dTa);
 		printf("gain: %lf\n", gain);
+		for(int row = 0; row < 24; row++){
+			for(int col = 0; col < 32; col++){
+				pix[row * 32 + col]
+					= (double)ram.named.ram_PIX[row * 32 + col] * gain
+					+ (double)offset_ref[row * 32 + col]
+					  * (1 + K_Ta[row * 32 + col] * dTa)
+					  * (1 + K_V[row%2][col%2] * dV);
+				printf("%04d ", (int)pix[row * 32 + col]);
+			}
+			printf("\n");
+		}
 	}
 };
 
