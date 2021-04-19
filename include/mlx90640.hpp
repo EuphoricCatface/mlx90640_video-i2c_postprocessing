@@ -399,7 +399,7 @@ public:
 			for(int col = 0; col < 32; col++){
 				pix[row * 32 + col]
 					= (double)ram.named.ram_PIX[row * 32 + col] * gain
-					+ (double)offset_ref[row * 32 + col]
+					- (double)offset_ref[row * 32 + col]
 					  * (1 + K_Ta[row * 32 + col] * dTa)
 					  * (1 + K_V[row%2][col%2] * dV);
 				printf("%04d ", (int)pix[row * 32 + col]);
