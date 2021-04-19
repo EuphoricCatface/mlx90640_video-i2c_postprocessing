@@ -288,7 +288,7 @@ public:
 					(a_col[col] << a_col_scale) +
 					((a_rem) << a_rem_scale);
 				printf("%04X ", a_ref_int);
-				a_ref[row * 32 + col] = (double)a_ref_int / (double)a_scale;
+				a_ref[row * 32 + col] = (double)a_ref_int / pow(2, a_scale);
 			}
 			printf("\n");
 		}
