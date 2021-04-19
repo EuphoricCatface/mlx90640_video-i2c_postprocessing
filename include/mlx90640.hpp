@@ -293,6 +293,19 @@ public:
 			printf("\n");
 		}
 
+		printf(" == TGC check == \n");
+
+		union {
+        	uint16_t word_;
+        	struct {
+        		int8_t TGC: 8;
+        		int8_t KsTa_EE: 8;
+        	} bf;
+        } ee243C;
+        ee243C.word_ = fetch_EE_address(0x243C);
+        if(ee243C.bf.TGC)
+        	printf("Warning: TGC value present, which will be ignored\n");
+
         return true;
     }
 private:
