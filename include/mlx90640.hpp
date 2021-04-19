@@ -382,7 +382,7 @@ private:
 	double pix[0x300];
 
 public:
-	void process_data(){
+	void process_frame() {
 		dV = (double)(-((int)Vdd_25_EE << 5) + VDD_raw + 16384) / (double) K_Vdd_EE / 32.0;
 	    V_PTAT_art = (double)(1 << 18) / (a_PTAT + (double)V_BE / (double)V_PTAT);
 	    dTa = (V_PTAT_art / (1.0 + K_V_PTAT * dV) - V_PTAT_25) / K_T_PTAT;
@@ -392,6 +392,9 @@ public:
 	    printf("V_PTAT_art is %lf\n", V_PTAT_art);
 	    printf("dTa: %lf\n", dTa);
 		printf("gain: %lf\n", gain);
+	}
+
+	void process_pixel() {
 		for(int row = 0; row < 24; row++){
 			for(int col = 0; col < 32; col++){
 				pix[row * 32 + col]

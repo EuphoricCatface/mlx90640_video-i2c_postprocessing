@@ -33,7 +33,8 @@ int main() {
 	    if(!device.process_frame_file())
 	        break;
 
-	    device.process_data();
+	    device.process_frame();
+	    device.process_pixel();
 	}
 
     printf("closing\n");
