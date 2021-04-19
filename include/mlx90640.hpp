@@ -315,6 +315,7 @@ private:
 	int VDD_raw;
 	int V_PTAT;
 	int V_BE;
+	int gain_ram;
 
 public: // temporary for debug
 	int get_VDD_raw() {return VDD_raw;}
@@ -368,6 +369,8 @@ public:
 		printf("VDD_raw is %04hX\n", VDD_raw);
 		printf("V_BE, V_PTAT: %hd, %hd\n", V_BE, V_PTAT);
 
+		gain_ram = ram.named.ram_GAIN;
+
 		return true;
 	}
 
@@ -375,16 +378,19 @@ private:
 	double dV;
 	double V_PTAT_art;
 	double dTa;
+	double gain;
 
 public:
 	void process_data(){
 		dV = (double)(-((int)Vdd_25_EE << 5) + VDD_raw + 16384) / (double) K_Vdd_EE / 32.0;
 	    V_PTAT_art = (double)(1 << 18) / (a_PTAT + (double)V_BE / (double)V_PTAT);
 	    dTa = (V_PTAT_art / (1.0 + K_V_PTAT * dV) - V_PTAT_25) / K_T_PTAT;
+		gain = (double)gain_ee / (double)gain_ram;
 
 	    printf("dV: %lf\n", dV);
 	    printf("V_PTAT_art is %lf\n", V_PTAT_art);
 	    printf("dTa: %lf\n", dTa);
+		printf("gain: %lf\n", gain);
 	}
 };
 
