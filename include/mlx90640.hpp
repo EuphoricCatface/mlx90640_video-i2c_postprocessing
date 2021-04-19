@@ -29,6 +29,7 @@ private:
 
 	int gain_ee;
 	double K_V[2][2];
+	double K_Ta[0x300];
 
 public: // temporary for debug
 	int get_K_Vdd_EE() {return K_Vdd_EE;}
@@ -161,6 +162,49 @@ public:
         K_V[0][1] = (double)ee2434.bf.K_V_rEcO / (double)(1 << K_V_scale);
         K_V[1][0] = (double)ee2434.bf.K_V_rOcE / (double)(1 << K_V_scale);
         K_V[1][1] = (double)ee2434.bf.K_V_rOcO / (double)(1 << K_V_scale);
+
+        printf(" == K_Ta <frame> == \n");
+		int K_Ta_PIX[0x300];
+		for(int i=0; i < 0x300; i++){
+			K_Ta_PIX[i] = ee.named.ee_PIX[i].bf.K_Ta;
+		}
+
+		unsigned K_Ta_scale1 = ee2438.bf.K_Ta_scale1 + 8;
+		unsigned K_Ta_scale2 = ee2438.bf.K_Ta_scale2;
+
+		int K_Ta_2x2[2][2];
+        union {
+        	uint16_t word_;
+        	struct {
+        		int8_t K_Ta_rOcO: 8; // datasheet says Even Even, but that's 1-based index
+        		int8_t K_Ta_rEcO: 8;
+        	} bf;
+        } ee2437;
+		union {
+        	uint16_t word_;
+        	struct {
+        		int8_t K_Ta_rOcE: 8;
+        		int8_t K_Ta_rEcE: 8;
+        	} bf;
+        } ee2436;
+        ee2437.word_ = fetch_EE_address(0x2437);
+        ee2436.word_ = fetch_EE_address(0x2436);
+        K_Ta_2x2[0][0] = ee2436.bf.K_Ta_rEcE;
+        K_Ta_2x2[1][0] = ee2436.bf.K_Ta_rOcE;
+        K_Ta_2x2[0][1] = ee2437.bf.K_Ta_rEcO;
+        K_Ta_2x2[1][1] = ee2437.bf.K_Ta_rOcO;
+
+		printf("scale1: %u\n", K_Ta_scale1);
+        for(int row = 0; row < 24; row++){
+        	for(int col = 0; col < 32; col++){
+        		int K_Ta_int = K_Ta_2x2[row%2][col%2] + (K_Ta_PIX[row * 24 + col] << K_Ta_scale2);
+        		printf("%04d ", K_Ta_int);
+        		K_Ta[row * 24 + col]
+        			= (double)(K_Ta_int)
+        			  / (double)(1 << K_Ta_scale1);
+        	}
+        	printf("\n");
+        }
 
 		printf(" == offset == \n");
         int offset_avg = ee.named.PIX_OS_AVG;
