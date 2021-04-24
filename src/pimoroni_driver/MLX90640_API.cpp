@@ -14,8 +14,8 @@
  * limitations under the License.
  *
  */
-#include <MLX90640_I2C_Driver.h>
-#include <MLX90640_API.h>
+#include "pimoroni_driver/MLX90640_API.hpp"
+#include "mlx90640.hpp"
 #include <math.h>
 #include <stdio.h>
 #include <chrono>

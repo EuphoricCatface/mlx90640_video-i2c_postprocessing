@@ -1,4 +1,6 @@
 mlx90640_video_i2c_postprocessing_sources = [
+  'pimoroni_driver/MLX90640_API.cpp',
+  'mlx90640.cpp',
   'main.cpp',
 ]
 
