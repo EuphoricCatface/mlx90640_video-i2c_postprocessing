@@ -6,6 +6,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <endian.h>
+#include <cmath>
 
 #include "memory_mlx90640.hpp"
 
@@ -268,19 +269,31 @@ public:
 			a_row[4*row_+1] = ee.named.ACC_ROW[row_].bf.ACC_ROW_2_;
 			a_row[4*row_+2] = ee.named.ACC_ROW[row_].bf.ACC_ROW_3_;
 			a_row[4*row_+3] = ee.named.ACC_ROW[row_].bf.ACC_ROW_4_;
+			printf("%d %d %d %d ",
+				ee.named.ACC_ROW[row_].bf.ACC_ROW_1_,
+				ee.named.ACC_ROW[row_].bf.ACC_ROW_2_,
+				ee.named.ACC_ROW[row_].bf.ACC_ROW_3_,
+				ee.named.ACC_ROW[row_].bf.ACC_ROW_4_);
 		}
+		printf("\n");
 		for(int col_ = 0; col_ < 32/4; col_++){
 			a_col[4*col_] = ee.named.ACC_COL[col_].bf.ACC_COL_1_;
 			a_col[4*col_+1] = ee.named.ACC_COL[col_].bf.ACC_COL_2_;
 			a_col[4*col_+2] = ee.named.ACC_COL[col_].bf.ACC_COL_3_;
 			a_col[4*col_+3] = ee.named.ACC_COL[col_].bf.ACC_COL_4_;
+			printf("%d %d %d %d ",
+				ee.named.ACC_COL[col_].bf.ACC_COL_1_,
+				ee.named.ACC_COL[col_].bf.ACC_COL_2_,
+				ee.named.ACC_COL[col_].bf.ACC_COL_3_,
+				ee.named.ACC_COL[col_].bf.ACC_COL_4_);
 		}
+		printf("\n");
 		for(int row = 0; row < 24; row++){
 			for(int col = 0; col < 32; col++){
 				int a_rem = (ee.named.ee_PIX[row * 32 + col].word_ & 0x03f0) >> 4;
 				if(a_rem & 1<<5)
 					a_rem |= 0xffffffc0;
-				// printf("%02d ", a_rem);
+				// printf("%04d ", a_rem);
 				// a_ref[row * 32 + col] =
 				int a_ref_int =
 					a_avg +
@@ -317,6 +330,8 @@ private:
 	int V_BE;
 	int gain_ram;
 
+	FILE* save_raw;
+
 public: // temporary for debug
 	int get_VDD_raw() {return VDD_raw;}
 	int get_V_PTAT() {return V_PTAT;}
@@ -331,6 +346,7 @@ private:
     }
 
     void close_frame_file(){
+    	fclose(save_raw);
     	if(ram_fd != -1)
     		close(ram_fd);
     }
@@ -356,6 +372,7 @@ private:
 
 public:
 	bool init_frame_file(const char * path){
+		save_raw = fopen("/home/USER/raw", "wb");
 		return open_frame_file(path);
 	}
 
@@ -379,7 +396,12 @@ private:
 	double V_PTAT_art;
 	double dTa;
 	double gain;
+	double T_ar;
+	double e;
+
 	double pix[0x300];
+	double To[0x300];
+	uint16_t To_int[0x300];
 
 public:
 	void process_frame() {
@@ -392,6 +414,9 @@ public:
 	    printf("V_PTAT_art is %lf\n", V_PTAT_art);
 	    printf("dTa: %lf\n", dTa);
 		printf("gain: %lf\n", gain);
+
+		e = 1;
+		T_ar = std::pow((dTa + 273.15 + 25.0), 4);
 	}
 
 	void process_pixel() {
@@ -402,10 +427,14 @@ public:
 					- (double)offset_ref[row * 32 + col]
 					  * (1 + K_Ta[row * 32 + col] * dTa)
 					  * (1 + K_V[row%2][col%2] * dV);
-				printf("%04d ", (int)pix[row * 32 + col]);
+				To[row * 32 + col] = pow((pix[row * 32 + col] / a_ref[row * 32 + col] + T_ar), 0.25) - 273.15;
+				// printf("%02d ", (int)pix[row * 32 + col]);
+				printf("%02d ", (int)(To[row * 32 + col]));
+				To_int[row * 32 + col] = (To[row * 32 + col] - 20) * 3000;
 			}
 			printf("\n");
 		}
+		fwrite(To_int, sizeof(uint16_t), 0x300, save_raw);
 	}
 };
 
