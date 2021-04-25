@@ -33,7 +33,7 @@ int main() {
     static uint16_t eeMLX90640[832];
     float emissivity = 1;
     uint16_t frame[834];
-    float eTa;
+    float Tr;
 
     paramsMLX90640 p_mlx90640;
     MLX90640_DumpEE(-1, eeMLX90640);
@@ -50,13 +50,13 @@ int main() {
 	    if(!device.process_frame_file())
 	        break;
 
-	    //device.process_frame();
-	    //device.process_pixel();
+	    device.process_frame();
+	    device.process_pixel();
 
 	    //MELEXIS
         MLX90640_GetFrameData(-1, frame);
-        eTa = MLX90640_GetTa(frame, &p_mlx90640);
-        MLX90640_CalculateTo(frame, &p_mlx90640, emissivity, eTa, mlx90640To);
+        Tr = MLX90640_GetTa(frame, &p_mlx90640) - 8; // datasheet assumes Tr = Ta - 8
+        MLX90640_CalculateTo(frame, &p_mlx90640, emissivity, Tr, mlx90640To);
         //MELEXIS
 
 

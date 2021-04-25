@@ -473,6 +473,8 @@ void MLX90640_CalculateTo(uint16_t *frameData, const paramsMLX90640 *params, flo
       irDataCP[1] = irDataCP[1] - (params->cpOffset[1] + params->ilChessC[0]) * (1 + params->cpKta * (ta - 25)) * (1 + params->cpKv * (vdd - 3.3));
     }
 
+    printf("melexis To\n");
+
     for( int pixelNumber = 0; pixelNumber < 768; pixelNumber++)
     {
         ilPattern = pixelNumber / 32 - (pixelNumber / 64) * 2; 
@@ -535,7 +537,10 @@ void MLX90640_CalculateTo(uint16_t *frameData, const paramsMLX90640 *params, flo
             
             result[pixelNumber] = To;
         }
+        printf("%04d ", (int)(result[pixelNumber] * 100));
+        if(pixelNumber % 32 == 31) printf("\n");
     }
+    printf("\n");
 }
 
 //------------------------------------------------------------------------------

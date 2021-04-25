@@ -414,10 +414,11 @@ public:
 		printf("gain: %lf\n", gain);
 
 		e = 1;
-		T_ar = std::pow((dTa + 273.15 + 25.0), 4);
+		T_ar = std::pow((dTa + 273.15 + 25.0), 4); // assuming emissivity is 1
 	}
 
 	void process_pixel() {
+		printf("To\n");
 		for(int row = 0; row < 24; row++){
 			for(int col = 0; col < 32; col++){
 				pix[row * 32 + col]
@@ -427,11 +428,12 @@ public:
 					  * (1 + K_V[row%2][col%2] * dV);
 				To[row * 32 + col] = pow((pix[row * 32 + col] / a_ref[row * 32 + col] + T_ar), 0.25) - 273.15;
 				// printf("%02d ", (int)pix[row * 32 + col]);
-				printf("%02d ", (int)(To[row * 32 + col]));
+				printf("%04d ", (int)(To[row * 32 + col] * 100));
 				To_int[row * 32 + col] = (To[row * 32 + col] - 20) * 3000;
 			}
 			printf("\n");
 		}
+		printf("\n\n");
 	}
 };
 
