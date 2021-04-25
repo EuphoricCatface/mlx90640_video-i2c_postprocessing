@@ -15,8 +15,7 @@ public:
 	mlx90640() { ram_fd = -1; }
 	~mlx90640() { close_frame_file(); }
 
-//private:
-public:
+private:
 	mlx90640_nvmem_ ee;
 
 	int K_Vdd_EE;
@@ -283,8 +282,8 @@ public:
 
         return true;
     }
-//private:
-public:
+
+private:
 	mlx90640_ram_ ram;
 	int ram_fd;
 
@@ -386,11 +385,5 @@ public:
 	}
 };
 
-// ============ driver adapter for melexis api ============= //
-extern mlx90640 * adapter_ptr;
-
-void drv_adapter_init(mlx90640 * ptr);
-int MLX90640_I2CRead(uint8_t slaveAddr,uint16_t startAddress, uint16_t nMemAddressRead, uint16_t *data);
-int MLX90640_I2CWrite(uint8_t slaveAddr,uint16_t writeAddress, uint16_t data);
 
 #endif // __MLX90640_H__

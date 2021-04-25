@@ -6,7 +6,6 @@
 
 #include "memory_mlx90640.hpp"
 #include "mlx90640.hpp"
-#include "pimoroni_driver/MLX90640_API.hpp"
 
 int main() {
 	std::cout << "Hello World\n";
@@ -16,20 +15,6 @@ int main() {
 	device.init_frame_file("/home/USER/mlx/mlx_v4l2_raw_frames");
 
 	//device.init_ee("/sys/bus/i2c/devices/1-0033/nvmem/nvram");
-
-	drv_adapter_init(&device);
-	// MELEXIS
-    static uint16_t eeMLX90640[832];
-    float emissivity = 1;
-    uint16_t frame[834];
-    float Tr;
-
-    paramsMLX90640 p_mlx90640;
-    MLX90640_DumpEE(-1, eeMLX90640);
-    MLX90640_ExtractParameters(eeMLX90640, &p_mlx90640);
-
-    static float mlx90640To[768];
-    // MELEXIS
 
 	uint16_t To_int[0x300];
 	FILE* save_raw;
@@ -41,13 +26,6 @@ int main() {
 
 	    device.process_frame();
 	    device.process_pixel();
-
-	    //MELEXIS
-        MLX90640_GetFrameData(-1, frame);
-        Tr = MLX90640_GetTa(frame, &p_mlx90640) - 8; // datasheet assumes Tr = Ta - 8
-        MLX90640_CalculateTo(frame, &p_mlx90640, emissivity, Tr, mlx90640To);
-        //MELEXIS
-
 
 		for(int row = 0; row < 24; row++){
 			for(int col = 0; col < 32; col++){
