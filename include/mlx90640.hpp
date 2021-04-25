@@ -42,17 +42,6 @@ public: // temporary for debug
 	int get_V_PTAT_25() {return V_PTAT_25;}
 
     void print_ee(void) {
-    	std::printf("size of ee.word: %d\n", (int)sizeof(ee.word_));
-    	std::printf("size of ee.named: %d\n", (int)sizeof(ee.named));
-    	std::printf("address of ee.word: %u\n", (unsigned)ee.word_);
-    	std::printf("address of ee.named: %u\n", (unsigned)&(ee.named));
-    	std::printf("%u %u %u %u %u\n",
-    		(unsigned)ee.named.ee_conf,
-    		(unsigned)&(ee.named.ee_2410),
-    		(unsigned)&(ee.named.ee_2420),
-    		(unsigned)&(ee.named.ee_GAIN),
-    		(unsigned)ee.named.ee_PIX);
-
         for(int i=0; i<0x340; i++)
 	    {
 	        char buffer[5];
@@ -81,7 +70,6 @@ private:
 		const int OFFSET = 0x2400;
 
         if(address < OFFSET || address > OFFSET + 0x33F){
-        //if(address < OFFSET || address >= OFFSET + 0x340){
             printf("bad EE addr, %d.\n", address);
             return 0;
         }
@@ -135,7 +123,7 @@ public:
 
         gain_ee = ee.named.ee_GAIN;
 
-        printf(" == K_V <2x2> == \n");
+        // printf(" == K_V <2x2> == \n");
 
         union {
         	uint16_t word_;
@@ -165,7 +153,7 @@ public:
         K_V[1][0] = (double)ee2434.bf.K_V_rOcE / (double)(1 << K_V_scale);
         K_V[1][1] = (double)ee2434.bf.K_V_rOcO / (double)(1 << K_V_scale);
 
-        printf(" == K_Ta <frame> == \n");
+        // printf(" == K_Ta <frame> == \n");
 		int K_Ta_PIX[0x300];
 		for(int i=0; i < 0x300; i++){
 			K_Ta_PIX[i] = ee.named.ee_PIX[i].bf.K_Ta;
@@ -196,19 +184,16 @@ public:
         K_Ta_2x2[0][1] = ee2437.bf.K_Ta_rEcO;
         K_Ta_2x2[1][1] = ee2437.bf.K_Ta_rOcO;
 
-		printf("scale1: %u\n", K_Ta_scale1);
         for(int row = 0; row < 24; row++){
         	for(int col = 0; col < 32; col++){
         		int K_Ta_int = K_Ta_2x2[row%2][col%2] + (K_Ta_PIX[row * 32 + col] << K_Ta_scale2);
-        		printf("%04d ", K_Ta_int);
         		K_Ta[row * 24 + col]
         			= (double)(K_Ta_int)
         			  / (double)(1 << K_Ta_scale1);
         	}
-        	printf("\n");
         }
 
-		printf(" == offset == \n");
+		// printf(" == offset == \n");
         int offset_avg = ee.named.PIX_OS_AVG;
         unsigned offset_row_scale = ee2410.bf.scale_Occ_row;
         unsigned offset_col_scale = ee2410.bf.scale_Occ_col;
@@ -234,12 +219,10 @@ public:
 					(offset_row[row] << offset_row_scale) +
 					(offset_col[col] << offset_col_scale) +
 					(ee.named.ee_PIX[row * 32 + col].bf.PIX_OFF << offset_rem_scale);
-				printf("%02X ", offset_ref[row * 32 + col] & 0x00FF); // the values didn't get too big
     		}
-    		printf("\n");
     	}
 
-		printf(" == alpha == \n");
+		// printf(" == alpha == \n");
 		union {
             uint16_t word_;
             struct bitfield_ee2420 {
@@ -257,12 +240,6 @@ public:
 		unsigned a_col_scale = ee2420.bf.scale_Acc_col;
 		unsigned a_rem_scale = ee2420.bf.scale_Acc_rem;
 
-		printf("a_avg: %u\n", a_avg);
-		printf("a_scale: %u\n", a_scale);
-		printf("a_row_scale: %u\n", a_row_scale);
-		printf("a_col_scale: %u\n", a_col_scale);
-		printf("a_rem_scale: %u\n", a_rem_scale);
-
 		int a_row[24];
 		int a_col[32];
 		for(int row_ = 0; row_ < 24/4; row_++){
@@ -270,44 +247,28 @@ public:
 			a_row[4*row_+1] = ee.named.ACC_ROW[row_].bf.ACC_ROW_2_;
 			a_row[4*row_+2] = ee.named.ACC_ROW[row_].bf.ACC_ROW_3_;
 			a_row[4*row_+3] = ee.named.ACC_ROW[row_].bf.ACC_ROW_4_;
-			printf("%d %d %d %d ",
-				ee.named.ACC_ROW[row_].bf.ACC_ROW_1_,
-				ee.named.ACC_ROW[row_].bf.ACC_ROW_2_,
-				ee.named.ACC_ROW[row_].bf.ACC_ROW_3_,
-				ee.named.ACC_ROW[row_].bf.ACC_ROW_4_);
 		}
-		printf("\n");
 		for(int col_ = 0; col_ < 32/4; col_++){
 			a_col[4*col_] = ee.named.ACC_COL[col_].bf.ACC_COL_1_;
 			a_col[4*col_+1] = ee.named.ACC_COL[col_].bf.ACC_COL_2_;
 			a_col[4*col_+2] = ee.named.ACC_COL[col_].bf.ACC_COL_3_;
 			a_col[4*col_+3] = ee.named.ACC_COL[col_].bf.ACC_COL_4_;
-			printf("%d %d %d %d ",
-				ee.named.ACC_COL[col_].bf.ACC_COL_1_,
-				ee.named.ACC_COL[col_].bf.ACC_COL_2_,
-				ee.named.ACC_COL[col_].bf.ACC_COL_3_,
-				ee.named.ACC_COL[col_].bf.ACC_COL_4_);
 		}
-		printf("\n");
 		for(int row = 0; row < 24; row++){
 			for(int col = 0; col < 32; col++){
 				int a_rem = (ee.named.ee_PIX[row * 32 + col].word_ & 0x03f0) >> 4;
 				if(a_rem & 1<<5)
 					a_rem |= 0xffffffc0;
-				// printf("%04d ", a_rem);
-				// a_ref[row * 32 + col] =
 				int a_ref_int =
 					a_avg +
 					(a_row[row] << a_row_scale) +
 					(a_col[col] << a_col_scale) +
 					((a_rem) << a_rem_scale);
-				printf("%04X ", a_ref_int);
 				a_ref[row * 32 + col] = (double)a_ref_int / pow(2, a_scale);
 			}
-			printf("\n");
 		}
 
-		printf(" == TGC check == \n");
+		// printf(" == TGC check == \n");
 
 		union {
         	uint16_t word_;
@@ -381,8 +342,6 @@ public:
 		VDD_raw = ram.named.VDD_raw;
 		V_PTAT = ram.named.Ta_PTAT; // p18 says Ta_PTAT but p23 says V_PTAT
 		V_BE = ram.named.V_BE;
-		printf("VDD_raw is %04hX\n", VDD_raw);
-		printf("V_BE, V_PTAT: %hd, %hd\n", V_BE, V_PTAT);
 
 		gain_ram = ram.named.ram_GAIN;
 
@@ -408,17 +367,11 @@ public:
 	    dTa = (V_PTAT_art / (1.0 + K_V_PTAT * dV) - V_PTAT_25) / K_T_PTAT;
 		gain = (double)gain_ee / (double)gain_ram;
 
-	    printf("dV: %lf\n", dV);
-	    printf("V_PTAT_art is %lf\n", V_PTAT_art);
-	    printf("dTa: %lf\n", dTa);
-		printf("gain: %lf\n", gain);
-
 		e = 1;
 		T_ar = std::pow((dTa + 273.15 + 25.0), 4); // assuming emissivity is 1
 	}
 
 	void process_pixel() {
-		printf("To\n");
 		for(int row = 0; row < 24; row++){
 			for(int col = 0; col < 32; col++){
 				pix[row * 32 + col]
@@ -427,13 +380,9 @@ public:
 					  * (1 + K_Ta[row * 32 + col] * dTa)
 					  * (1 + K_V[row%2][col%2] * dV);
 				To[row * 32 + col] = pow((pix[row * 32 + col] / a_ref[row * 32 + col] + T_ar), 0.25) - 273.15;
-				// printf("%02d ", (int)pix[row * 32 + col]);
-				printf("%04d ", (int)(To[row * 32 + col] * 100));
 				To_int[row * 32 + col] = (To[row * 32 + col] - 20) * 3000;
 			}
-			printf("\n");
 		}
-		printf("\n\n");
 	}
 };
 
