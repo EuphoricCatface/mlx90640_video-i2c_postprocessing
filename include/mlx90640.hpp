@@ -357,7 +357,6 @@ private:
 
 	double pix[0x300];
 	double To[0x300];
-	uint16_t To_int[0x300];
 
 public:
 	void process_frame() {
@@ -379,11 +378,11 @@ public:
 					  * (1 + K_Ta[row * 32 + col] * dTa)
 					  * (1 + K_V[row%2][col%2] * dV);
 				To[row * 32 + col] = pow((pix[row * 32 + col] / a_ref[row * 32 + col] + T_ar), 0.25) - 273.15;
-				To_int[row * 32 + col] = (To[row * 32 + col] - 20) * 3000;
 			}
 		}
 	}
-};
 
+	const double * To_() { return To; }
+};
 
 #endif // __MLX90640_H__

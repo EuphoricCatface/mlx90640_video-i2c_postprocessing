@@ -29,8 +29,7 @@ int main() {
 
 		for(int row = 0; row < 24; row++){
 			for(int col = 0; col < 32; col++){
-			    if(mlx90640To[row * 32 + col] < 0.01f) continue;
-				To_int[row * 32 + col] = (mlx90640To[row * 32 + col] - 20) * 3000;
+				To_int[row * 32 + col] = ((device.To_())[row * 32 + col] - 20) * 3000;
 			}
 		}
 		fwrite(To_int, sizeof(uint16_t), 0x300, save_raw);
