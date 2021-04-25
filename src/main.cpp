@@ -6,8 +6,7 @@
 
 #include "memory_mlx90640.hpp"
 #include "mlx90640.hpp"
-
-
+#include "pimoroni_driver/MLX90640_API.hpp"
 
 int main() {
 	std::cout << "Hello World\n";
@@ -29,12 +28,32 @@ int main() {
 	// printf("EE[2432] is %04hX\n", nv.fetch_EE_address(0x2432));
 	printf("K_V_PTAT is %lf, K_T_PTAT is %lf, V_PTAT_25 is %hd\n", K_V_PTAT, K_T_PTAT, V_PTAT_25);
 
+	drv_adapter_init(&device);
+	// MELEXIS
+    static uint16_t eeMLX90640[832];
+    float emissivity = 1;
+    uint16_t frame[834];
+    float eTa;
+
+    paramsMLX90640 p_mlx90640;
+    MLX90640_DumpEE(-1, eeMLX90640);
+    MLX90640_ExtractParameters(eeMLX90640, &p_mlx90640);
+
+    static float mlx90640To[768];
+    // MELEXIS
+
 	while(1){
 	    if(!device.process_frame_file())
 	        break;
 
-	    device.process_frame();
-	    device.process_pixel();
+	    //device.process_frame();
+	    //device.process_pixel();
+
+	    //MELEXIS
+        MLX90640_GetFrameData(-1, frame);
+        eTa = MLX90640_GetTa(frame, &p_mlx90640);
+        MLX90640_CalculateTo(frame, &p_mlx90640, emissivity, eTa, mlx90640To);
+        //MELEXIS
 	}
 
     printf("closing\n");
