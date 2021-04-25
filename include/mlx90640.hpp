@@ -332,8 +332,6 @@ public:
 	int V_BE;
 	int gain_ram;
 
-	FILE* save_raw;
-
 public: // temporary for debug
 	int get_VDD_raw() {return VDD_raw;}
 	int get_V_PTAT() {return V_PTAT;}
@@ -348,7 +346,6 @@ private:
     }
 
     void close_frame_file(){
-    	fclose(save_raw);
     	if(ram_fd != -1)
     		close(ram_fd);
     }
@@ -374,7 +371,6 @@ private:
 
 public:
 	bool init_frame_file(const char * path){
-		save_raw = fopen("/home/USER/raw", "wb");
 		return open_frame_file(path);
 	}
 
@@ -436,7 +432,6 @@ public:
 			}
 			printf("\n");
 		}
-		fwrite(To_int, sizeof(uint16_t), 0x300, save_raw);
 	}
 };
 

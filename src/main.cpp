@@ -42,6 +42,10 @@ int main() {
     static float mlx90640To[768];
     // MELEXIS
 
+	uint16_t To_int[0x300];
+	FILE* save_raw;
+	save_raw = fopen("/home/USER/raw", "wb");
+
 	while(1){
 	    if(!device.process_frame_file())
 	        break;
@@ -54,9 +58,20 @@ int main() {
         eTa = MLX90640_GetTa(frame, &p_mlx90640);
         MLX90640_CalculateTo(frame, &p_mlx90640, emissivity, eTa, mlx90640To);
         //MELEXIS
+
+
+		for(int row = 0; row < 24; row++){
+			for(int col = 0; col < 32; col++){
+			    if(mlx90640To[row * 32 + col] < 0.01f) continue;
+				To_int[row * 32 + col] = (mlx90640To[row * 32 + col] - 20) * 3000;
+			}
+		}
+		fwrite(To_int, sizeof(uint16_t), 0x300, save_raw);
+
 	}
 
     printf("closing\n");
+    fclose(save_raw);
 
 	return 0;
 }
