@@ -995,6 +995,7 @@ void ExtractAlphaParameters(uint16_t *eeData, paramsMLX90640 *mlx90640)
         }
     }
 
+    printf(" == melexis alpha == \n");
     for(int i = 0; i < 24; i++)
     {
         for(int j = 0; j < 32; j ++)
@@ -1007,8 +1008,10 @@ void ExtractAlphaParameters(uint16_t *eeData, paramsMLX90640 *mlx90640)
             }
             mlx90640->alpha[p] = mlx90640->alpha[p]*(1 << accRemScale);
             mlx90640->alpha[p] = (alphaRef + (accRow[i] << accRowScale) + (accColumn[j] << accColumnScale) + mlx90640->alpha[p]);
+            printf("%04X ", (int)mlx90640->alpha[p]);
             mlx90640->alpha[p] = mlx90640->alpha[p] / pow(2,(double)alphaScale);
         }
+		printf("\n");
     }
 }
 
@@ -1068,6 +1071,7 @@ void ExtractOffsetParameters(uint16_t *eeData, paramsMLX90640 *mlx90640)
         }
     }
 
+    printf(" == melexis offset == \n");
     for(int i = 0; i < 24; i++)
     {
         for(int j = 0; j < 32; j ++)
@@ -1080,7 +1084,9 @@ void ExtractOffsetParameters(uint16_t *eeData, paramsMLX90640 *mlx90640)
             }
             mlx90640->offset[p] = mlx90640->offset[p]*(1 << occRemScale);
             mlx90640->offset[p] = (offsetRef + (occRow[i] << occRowScale) + (occColumn[j] << occColumnScale) + mlx90640->offset[p]);
+			printf("%02X ", mlx90640->offset[p] & 0x00FF);
         }
+        printf("\n");
     }
 }
 
@@ -1129,6 +1135,7 @@ void ExtractKtaPixelParameters(uint16_t *eeData, paramsMLX90640 *mlx90640)
     ktaScale1 = ((eeData[56] & 0x00F0) >> 4) + 8;
     ktaScale2 = (eeData[56] & 0x000F);
 
+	printf(" == melexis kta == \n");
     for(int i = 0; i < 24; i++)
     {
         for(int j = 0; j < 32; j ++)
@@ -1142,8 +1149,10 @@ void ExtractKtaPixelParameters(uint16_t *eeData, paramsMLX90640 *mlx90640)
             }
             mlx90640->kta[p] = mlx90640->kta[p] * (1 << ktaScale2);
             mlx90640->kta[p] = KtaRC[split] + mlx90640->kta[p];
+        	printf("%04d ", (int)mlx90640->kta[p]);
             mlx90640->kta[p] = mlx90640->kta[p] / pow(2,(double)ktaScale1);
         }
+        printf("\n");
     }
 }
 
@@ -1189,7 +1198,6 @@ void ExtractKvPixelParameters(uint16_t *eeData, paramsMLX90640 *mlx90640)
     KvT[3] = KvReCe;
   
     kvScale = (eeData[56] & 0x0F00) >> 8;
-
 
     for(int i = 0; i < 24; i++)
     {
