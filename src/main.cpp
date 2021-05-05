@@ -4,19 +4,101 @@
 #include <unistd.h>
 #include <endian.h>
 
+#include <getopt.h>     /* getopt_long() */
+
 #include "memory_mlx90640.hpp"
 #include "mlx90640.hpp"
 
-int main() {
-	mlx90640 device = mlx90640();
-	device.init_ee("/home/USER/mlx/nvmem");
-	device.init_frame_file("/home/USER/mlx/mlx_v4l2_raw_frames");
+enum io_method_ {
+        IO_METHOD_READ,
+        IO_METHOD_MMAP,
+        IO_METHOD_USERPTR,
+};
 
-	//device.init_ee("/sys/bus/i2c/devices/1-0033/nvmem/nvram");
+static const char short_options[] = "d:n:hmrf:s:";
+
+static const struct option
+long_options[] = {
+    { "device", required_argument,  NULL, 'd' },
+    { "nvram",  required_argument,  NULL, 'n' },
+    { "help",   no_argument,        NULL, 'h' },
+    { "mmap",   no_argument,        NULL, 'm' },
+    { "read",   no_argument,        NULL, 'r' },
+    { "fps",    required_argument,  NULL, 'f' },
+    { "save",   required_argument,  NULL, 's' },
+    { 0, 0, 0, 0 }
+};
+
+int main(int argc, char **argv) {
+	mlx90640 device = mlx90640();
+
+	char * dev_name = NULL;
+	char * nv_name = NULL;
+	char * fps = NULL;
+
+	bool save = false;
+	char * save_path = NULL;
+
+	int io_method = IO_METHOD_READ;
+
+	for (;;){
+	    int idx;
+	    int c;
+
+	    c = getopt_long(argc, argv,
+	                    short_options, long_options, &idx);
+
+	    if (c == -1)
+	        break;
+
+	    switch (c) {
+	    case 0: /* getopt_long() flag */
+	        break;
+
+	    case 'd':
+	        dev_name = optarg;
+	        break;
+
+	    case 'n':
+	        nv_name = optarg;
+	        break;
+
+	    case 'm':
+	        printf("mmap option nyi");
+	        io_method = IO_METHOD_MMAP;
+	        break;
+
+	    case 'r':
+	        io_method = IO_METHOD_READ;
+	        break;
+
+	    case 'f':
+	        printf("fps option nyi");
+	        fps = optarg;
+	        break;
+
+	    case 's':
+	        save = true;
+	        save_path = optarg;
+	        break;
+
+	    default:
+	        break;
+	    }
+	}
+
+	if(dev_name == NULL || nv_name == NULL){
+	    printf("Required option not given");
+	    exit(EXIT_FAILURE);
+	}
+
+	device.init_ee(nv_name);
+	device.init_frame_file(dev_name);
 
 	uint16_t To_int[0x300];
 	FILE* save_raw;
-	save_raw = fopen("/home/USER/raw", "wb");
+	if(save)
+	    save_raw = fopen(save_path, "wb");
 
 	while(1){
 	    if(!device.process_frame_file())
@@ -25,17 +107,20 @@ int main() {
 	    device.process_frame();
 	    device.process_pixel();
 
-		for(int row = 0; row < 24; row++){
-			for(int col = 0; col < 32; col++){
-				To_int[row * 32 + col] = ((device.To_())[row * 32 + col] - 20) * 3000;
-			}
+        if(save){
+		    for(int row = 0; row < 24; row++){
+			    for(int col = 0; col < 32; col++){
+				    To_int[row * 32 + col] = ((device.To_())[row * 32 + col] - 20) * 3000;
+			    }
+		    }
+		    fwrite(To_int, sizeof(uint16_t), 0x300, save_raw);
 		}
-		fwrite(To_int, sizeof(uint16_t), 0x300, save_raw);
 
 	}
 
     printf("closing\n");
-    fclose(save_raw);
-
+    if(save){
+        fclose(save_raw);
+    }
 	return 0;
 }
