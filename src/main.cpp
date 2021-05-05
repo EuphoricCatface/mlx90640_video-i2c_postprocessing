@@ -8,12 +8,7 @@
 
 #include "memory_mlx90640.hpp"
 #include "mlx90640.hpp"
-
-enum io_method_ {
-        IO_METHOD_READ,
-        IO_METHOD_MMAP,
-        IO_METHOD_USERPTR,
-};
+#include "dev_handler.hpp"
 
 static const char short_options[] = "d:n:hmrf:s:";
 
@@ -34,12 +29,14 @@ int main(int argc, char **argv) {
 
 	char * dev_name = NULL;
 	char * nv_name = NULL;
-	char * fps = NULL;
+
+	char * fps_ = NULL;
+	int fps;
 
 	bool save = false;
 	char * save_path = NULL;
 
-	int io_method = IO_METHOD_READ;
+	int io_method = dev_handler::IO_METHOD_READ;
 
 	for (;;){
 	    int idx;
@@ -65,16 +62,17 @@ int main(int argc, char **argv) {
 
 	    case 'm':
 	        printf("mmap option nyi");
-	        io_method = IO_METHOD_MMAP;
+	        io_method = dev_handler::IO_METHOD_MMAP;
 	        break;
 
 	    case 'r':
-	        io_method = IO_METHOD_READ;
+	        io_method = dev_handler::IO_METHOD_READ;
 	        break;
 
 	    case 'f':
 	        printf("fps option nyi");
-	        fps = optarg;
+	        fps_ = optarg;
+	        fps = -1;
 	        break;
 
 	    case 's':
@@ -93,7 +91,7 @@ int main(int argc, char **argv) {
 	}
 
 	device.init_ee(nv_name);
-	device.init_frame_file(dev_name);
+	device.init_frame_file(dev_name, io_method, fps);
 
 	uint16_t To_int[0x300];
 	FILE* save_raw;
