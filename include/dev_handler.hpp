@@ -32,6 +32,10 @@ private:
 	int fps;
 	bool is_dev;
 
+	bool open_;
+	bool init;
+	bool capturing;
+
 	struct buffer {
         void   *start;
         size_t  length;
@@ -44,13 +48,16 @@ public:
 		io_method = _io_method;
 		fps = _fps;
 		is_dev = true;
+		open_ = false;
+		init = false;
+		capturing = false;
 	}
 	~dev_handler() {
 		if (is_dev) {
-			stop_capturing();
-			uninit_device();
+			if(capturing) stop_capturing();
+			if(init) uninit_device();
 		}
-		close_device();
+		if(open_) close_device();
 	}
 
 private: // basic tools
@@ -89,8 +96,11 @@ private: // getting to work
 
 		if (is_dev)
         	fd = open(path, O_RDWR /* required */ | O_NONBLOCK, 0);
-        else
+        else{
         	fd = open(path, O_RDONLY);
+        	open_ = true;
+        	return;
+        }
 
         if (-1 == fd) {
             fprintf(stderr, "Cannot open '%s': %d, %s\n",
@@ -115,6 +125,7 @@ private: // getting to work
                 init_mmap();
                 break;
         }
+        open_ = true;
     }
 
     void init_v4l2_device(){
@@ -144,6 +155,7 @@ private: // getting to work
             }
             break;
         }
+        init = true;
     }
 
     void init_mmap(void)
@@ -369,6 +381,7 @@ public:
         type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         if (-1 == xioctl(fd, VIDIOC_STREAMON, &type))
             errno_exit("VIDIOC_STREAMON");
+        capturing = true;
 	}
 
     bool read_frame_file(void * dest){
