@@ -89,8 +89,6 @@ public:
             } bf;
         } ee2433;
         ee2433.word_ = fetch_EE_address(0x2433);
-        Vdd_25_EE = ee2433.bf.Vdd_25_EE;
-        K_Vdd_EE = ee2433.bf.K_Vdd_EE;
 
         union {
             uint16_t word_;
@@ -102,7 +100,6 @@ public:
             } bf;
         } ee2410;
         ee2410.word_ = fetch_EE_address(0x2410);
-        a_PTAT = (double)ee2410.bf.a_PTAT_EE / 4.0 + 8.0;
 
         union {
             uint16_t word_;
@@ -113,16 +110,6 @@ public:
             } bf;
         } ee2432;
         ee2432.word_ = fetch_EE_address(0x2432);
-        K_V_PTAT = (double)ee2432.bf.K_V_PTAT_EE / (double)(1 << 12);
-        int K_T_PTAT_EE = (ee2432.bf.K_T_PTAT_u2 << 8)
-                            | (ee2432.bf.K_T_PTAT_l8);
-        K_T_PTAT = (double)K_T_PTAT_EE / 8.0;
-
-        V_PTAT_25 = ee.named.PTAT_25;
-
-        gain_ee = ee.named.ee_GAIN;
-
-        // printf(" == K_V <2x2> == \n");
 
         union {
         	uint16_t word_;
@@ -145,6 +132,59 @@ public:
         	} bf;
         } ee2438;
         ee2438.word_ = fetch_EE_address(0x2438);
+
+        union {
+        	uint16_t word_;
+        	struct {
+        		int8_t K_Ta_rOcO: 8; // datasheet says Even Even, but that's 1-based index
+        		int8_t K_Ta_rEcO: 8;
+        	} bf;
+        } ee2437;
+		union {
+        	uint16_t word_;
+        	struct {
+        		int8_t K_Ta_rOcE: 8;
+        		int8_t K_Ta_rEcE: 8;
+        	} bf;
+        } ee2436;
+        ee2437.word_ = fetch_EE_address(0x2437);
+        ee2436.word_ = fetch_EE_address(0x2436);
+
+		union {
+            uint16_t word_;
+            struct bitfield_ee2420 {
+                unsigned int scale_Acc_rem: 4;
+                unsigned int scale_Acc_col: 4;
+                unsigned int scale_Acc_row: 4;
+                unsigned int a_scale_EE: 4;
+            } bf;
+        } ee2420;
+        ee2420.word_ = fetch_EE_address(0x2420);
+
+		union {
+        	uint16_t word_;
+        	struct {
+        		int8_t TGC: 8;
+        		int8_t KsTa_EE: 8;
+        	} bf;
+        } ee243C;
+        ee243C.word_ = fetch_EE_address(0x243C);
+
+        Vdd_25_EE = ee2433.bf.Vdd_25_EE;
+        K_Vdd_EE = ee2433.bf.K_Vdd_EE;
+
+        a_PTAT = (double)ee2410.bf.a_PTAT_EE / 4.0 + 8.0;
+
+        K_V_PTAT = (double)ee2432.bf.K_V_PTAT_EE / (double)(1 << 12);
+        int K_T_PTAT_EE = (ee2432.bf.K_T_PTAT_u2 << 8)
+                            | (ee2432.bf.K_T_PTAT_l8);
+        K_T_PTAT = (double)K_T_PTAT_EE / 8.0;
+
+        V_PTAT_25 = ee.named.PTAT_25;
+
+        gain_ee = ee.named.ee_GAIN;
+
+        // printf(" == K_V <2x2> == \n");
         unsigned K_V_scale = ee2438.bf.K_V_scale;
 
         K_V[0][0] = (double)ee2434.bf.K_V_rEcE / (double)(1 << K_V_scale);
@@ -162,22 +202,6 @@ public:
 		unsigned K_Ta_scale2 = ee2438.bf.K_Ta_scale2;
 
 		int K_Ta_2x2[2][2];
-        union {
-        	uint16_t word_;
-        	struct {
-        		int8_t K_Ta_rOcO: 8; // datasheet says Even Even, but that's 1-based index
-        		int8_t K_Ta_rEcO: 8;
-        	} bf;
-        } ee2437;
-		union {
-        	uint16_t word_;
-        	struct {
-        		int8_t K_Ta_rOcE: 8;
-        		int8_t K_Ta_rEcE: 8;
-        	} bf;
-        } ee2436;
-        ee2437.word_ = fetch_EE_address(0x2437);
-        ee2436.word_ = fetch_EE_address(0x2436);
         K_Ta_2x2[0][0] = ee2436.bf.K_Ta_rEcE;
         K_Ta_2x2[1][0] = ee2436.bf.K_Ta_rOcE;
         K_Ta_2x2[0][1] = ee2437.bf.K_Ta_rEcO;
@@ -222,16 +246,6 @@ public:
     	}
 
 		// printf(" == alpha == \n");
-		union {
-            uint16_t word_;
-            struct bitfield_ee2420 {
-                unsigned int scale_Acc_rem: 4;
-                unsigned int scale_Acc_col: 4;
-                unsigned int scale_Acc_row: 4;
-                unsigned int a_scale_EE: 4;
-            } bf;
-        } ee2420;
-        ee2420.word_ = fetch_EE_address(0x2420);
 
         unsigned a_avg = ee.named.PIX_SENS_AVG;
         unsigned a_scale = ee2420.bf.a_scale_EE + 30;
@@ -268,15 +282,6 @@ public:
 		}
 
 		// printf(" == TGC check == \n");
-
-		union {
-        	uint16_t word_;
-        	struct {
-        		int8_t TGC: 8;
-        		int8_t KsTa_EE: 8;
-        	} bf;
-        } ee243C;
-        ee243C.word_ = fetch_EE_address(0x243C);
         if(ee243C.bf.TGC)
         	printf("Warning: TGC value present, which will be ignored\n");
 
