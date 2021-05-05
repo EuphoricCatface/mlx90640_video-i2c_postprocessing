@@ -22,8 +22,8 @@
 class dev_handler {
 public:
 	enum io_method_ {
-		    IO_METHOD_READ,
-		    IO_METHOD_MMAP
+	    IO_METHOD_READ,
+	    IO_METHOD_MMAP
 	};
 
 private:

@@ -36,7 +36,7 @@ int main(int argc, char **argv) {
 	bool save = false;
 	char * save_path = NULL;
 
-	int io_method = dev_handler::IO_METHOD_READ;
+	int io_method = dev_handler::IO_METHOD_MMAP;
 
 	for (;;){
 	    int idx;
@@ -61,7 +61,6 @@ int main(int argc, char **argv) {
 	        break;
 
 	    case 'm':
-	        printf("mmap option nyi");
 	        io_method = dev_handler::IO_METHOD_MMAP;
 	        break;
 
