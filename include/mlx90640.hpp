@@ -317,7 +317,7 @@ private:
 
     bool read_frame_file(){
         int rdsz_ = read(ram_fd, (unsigned char *)(ram.word_),
-	        sizeof(ram) / sizeof(char));
+	        sizeof(ram.word_) / sizeof(char));
     	if(rdsz_ != 0x680) {
     	    std::cout << "A frame did not reach its full size.\n";
     	    return false;
