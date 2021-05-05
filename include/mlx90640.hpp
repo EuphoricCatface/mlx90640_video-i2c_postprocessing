@@ -9,11 +9,12 @@
 #include <cmath>
 
 #include "memory_mlx90640.hpp"
+#include "dev_handler.hpp"
 
 class mlx90640 {
 public:
-	mlx90640() { ram_fd = -1; }
-	~mlx90640() { close_frame_file(); }
+	mlx90640() {}
+	~mlx90640() {}
 
 private:
 	mlx90640_nvmem_ ee;
@@ -290,7 +291,7 @@ public:
 
 private:
 	mlx90640_ram_ ram;
-	int ram_fd;
+	dev_handler dev;
 
 	int VDD_raw;
 	int V_PTAT;
@@ -303,28 +304,6 @@ public: // temporary for debug
 	int get_V_BE() {return V_BE;}
 
 private:
-	bool open_frame_file(const char * path){
-        ram_fd = open(path, O_RDONLY);
-        if(ram_fd == -1)
-            return false;
-        return true;
-    }
-
-    void close_frame_file(){
-    	if(ram_fd != -1)
-    		close(ram_fd);
-    }
-
-    bool read_frame_file(){
-        int rdsz_ = read(ram_fd, (unsigned char *)(ram.word_),
-	        sizeof(ram.word_) / sizeof(char));
-    	if(rdsz_ != 0x680) {
-    	    std::cout << "A frame did not reach its full size.\n";
-    	    return false;
-    	}
-    	return true;
-    }
-
     unsigned short fetch_RAM_address(int address){
     	const int OFFSET = 0x400;
         if(address < OFFSET || address > OFFSET + 0x340){
@@ -334,13 +313,14 @@ private:
         return le16toh(ram.word_[address - OFFSET]);
     }
 
+
 public:
-	bool init_frame_file(const char * path){
-		return open_frame_file(path);
+	void init_frame_file(const char* path){
+		dev.init_frame_file(path);
 	}
 
 	bool process_frame_file(){
-		if(!read_frame_file())
+		if(!dev.read_frame_file(ram.word_))
 			return false;
 
 		VDD_raw = ram.named.VDD_raw;
