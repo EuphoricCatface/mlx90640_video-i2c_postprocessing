@@ -318,6 +318,8 @@ public:
 	void init_frame_file(const char* path, int io_method, int fps){
 		dev = dev_handler(io_method, fps);
 		dev.init_frame_file(path);
+
+		dev.start_capturing();
 	}
 
 	bool process_frame_file(){
