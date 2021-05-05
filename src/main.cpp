@@ -8,8 +8,6 @@
 #include "mlx90640.hpp"
 
 int main() {
-	std::cout << "Hello World\n";
-
 	mlx90640 device = mlx90640();
 	device.init_ee("/home/USER/mlx/nvmem");
 	device.init_frame_file("/home/USER/mlx/mlx_v4l2_raw_frames");
