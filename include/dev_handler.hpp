@@ -235,7 +235,8 @@ private: // getting to work
 
     bool read_raw(void * dest){
     	int rdsz_ = read(fd, (unsigned char *)(dest),
-		    sizeof(dest) / sizeof(char));
+		    //sizeof(dest) / sizeof(char)
+		    0x680);
 		if(rdsz_ < 0x680) {
 		    std::cout << "A frame did not reach its full size.\n";
 		    return false;
