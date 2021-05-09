@@ -130,6 +130,8 @@ private: // getting to work
 
     void init_v4l2_device(){
         struct v4l2_capability cap;
+        struct v4l2_captureparm parm;
+        struct v4l2_fract fract(1, 4);
 
     	if (xioctl(fd, VIDIOC_QUERYCAP, &cap) == -1) {
             if (EINVAL == errno) {
@@ -138,6 +140,15 @@ private: // getting to work
             } else {
                 errno_exit("VIDIOC_QUERYCAP");
             }
+        }
+
+        CLEAR(parm);
+        if (-1 == xioctl(fd, VIDIOC_G_PARM, &parm)) {
+    		errno_exit("VIDIOC_G_PARM");
+        }
+        parm.timeperframe = fract;
+        if (-1 == xioctl(fd, VIDIOC_S_PARM, &parm)) {
+        	errno_exit("VIDIOC_S_PARM");
         }
 
         switch (io_method) {
