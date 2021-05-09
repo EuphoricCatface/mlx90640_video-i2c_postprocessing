@@ -109,6 +109,7 @@ private: // getting to work
         }
 
         CLEAR(fmt);
+        fmt.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         if (-1 == xioctl(fd, VIDIOC_G_FMT, &fmt))
             errno_exit("VIDIOC_G_FMT");
 
@@ -130,7 +131,7 @@ private: // getting to work
 
     void init_v4l2_device(){
         struct v4l2_capability cap;
-        struct v4l2_captureparm parm;
+        struct v4l2_streamparm parm;
         struct v4l2_fract fract(1, 4);
 
     	if (xioctl(fd, VIDIOC_QUERYCAP, &cap) == -1) {
@@ -143,10 +144,11 @@ private: // getting to work
         }
 
         CLEAR(parm);
+        parm.type = V4L2_BUF_TYPE_VIDEO_CAPTURE;
         if (-1 == xioctl(fd, VIDIOC_G_PARM, &parm)) {
     		errno_exit("VIDIOC_G_PARM");
         }
-        parm.timeperframe = fract;
+        parm.parm.capture.timeperframe = fract;
         if (-1 == xioctl(fd, VIDIOC_S_PARM, &parm)) {
         	errno_exit("VIDIOC_S_PARM");
         }
