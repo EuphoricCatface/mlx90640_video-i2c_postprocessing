@@ -61,7 +61,7 @@ private:
             return false;
         ssize_t rdsz_ = read(fd, (unsigned char *)(ee.word_),
 	        sizeof(ee) / sizeof(char));
-    	std::cout << rdsz_ << " bytes read\n";
+    	std::cout << "EE: " << rdsz_ << " bytes read\n";
     	close(fd);
     	return true;
     }
