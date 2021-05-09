@@ -13,8 +13,8 @@
 
 class mlx90640 {
 public:
-	mlx90640() {}
-	~mlx90640() {}
+	mlx90640() { dev = nullptr; }
+	~mlx90640() { if(dev != nullptr) delete dev;}
 
 private:
 	mlx90640_nvmem_ ee;
@@ -291,7 +291,7 @@ public:
 
 private:
 	mlx90640_ram_ ram;
-	dev_handler dev;
+	dev_handler * dev;
 
 	int VDD_raw;
 	int V_PTAT;
@@ -316,14 +316,14 @@ private:
 
 public:
 	void init_frame_file(const char* path, int io_method, int fps){
-		dev = dev_handler(io_method, fps);
-		dev.init_frame_file(path);
+		dev = new dev_handler(io_method, fps);
+		dev->init_frame_file(path);
 
-		dev.start_capturing();
+		dev->start_capturing();
 	}
 
 	bool process_frame_file(){
-		if(!dev.read_frame_file(ram.word_))
+		if(!dev->read_frame_file(ram.word_))
 			return false;
 
 		VDD_raw = ram.named.VDD_raw;
