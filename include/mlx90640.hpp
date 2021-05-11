@@ -299,6 +299,8 @@ private:
 	int V_BE;
 	int gain_ram;
 
+	int subpage;
+
 public: // temporary for debug
 	int get_VDD_raw() {return VDD_raw;}
 	int get_V_PTAT() {return V_PTAT;}
@@ -365,17 +367,24 @@ public:
 
 		e = 1;
 		T_ar = std::pow((dTa + 273.15 + 25.0), 4); // assuming emissivity is 1
+
+		subpage = fetch_reg_address(0x8000) % 2;
 	}
 
 	void process_pixel() {
 		for(int row = 0; row < 24; row++){
 			for(int col = 0; col < 32; col++){
-				pix[row * 32 + col]
-					= (double)ram.named.ram_PIX[row * 32 + col] * gain
-					- (double)offset_ref[row * 32 + col]
-					  * (1 + K_Ta[row * 32 + col] * dTa)
+				int thispixel = row * 32 + col;
+				if ((row + col) % 2 != subpage)
+					continue; // discrepancy from datasheet: datasheet is 1-based index
+					// also we're assuming checkerboard pattern
+
+				pix[thispixel]
+					= (double)ram.named.ram_PIX[thispixel] * gain
+					- (double)offset_ref[thispixel]
+					  * (1 + K_Ta[thispixel] * dTa)
 					  * (1 + K_V[row%2][col%2] * dV);
-				To[row * 32 + col] = pow((pix[row * 32 + col] / a_ref[row * 32 + col] + T_ar), 0.25) - 273.15;
+				To[thispixel] = pow((pix[thispixel] / a_ref[thispixel] + T_ar), 0.25) - 273.15;
 			}
 		}
 	}
