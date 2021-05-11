@@ -69,7 +69,7 @@ private:
     unsigned short fetch_EE_address(int address){
 		const int OFFSET = 0x2400;
 
-        if(address < OFFSET || address > OFFSET + 0x33F){
+        if(address < OFFSET || address >= OFFSET + 0x340){
             printf("bad EE addr, %d.\n", address);
             return 0;
         }
@@ -307,7 +307,7 @@ public: // temporary for debug
 private:
     unsigned short fetch_RAM_address(int address){
     	const int OFFSET = 0x400;
-        if(address < OFFSET || address > OFFSET + 0x340){
+        if(address < OFFSET || address >= OFFSET + 0x340){
             printf("bad RAM addr, %d\n", address);
             return 0;
         }
