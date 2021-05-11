@@ -371,6 +371,8 @@ public:
 	}
 
 	const double * To_() { return To; }
+	const uint16_t * Pix_Raw_() { return ram.word_; }
+
 };
 
 #endif // __MLX90640_H__
