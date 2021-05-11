@@ -91,7 +91,7 @@ union mlx90640_nvmem_ {
 };
 
 union mlx90640_ram_ {
-    uint16_t word_[0x340];
+    uint16_t word_[0x360];
     struct {
         int16_t ram_PIX [0x300]; // 0x400
 
@@ -112,6 +112,8 @@ union mlx90640_ram_ {
         uint16_t _6 [0x5];
 
         uint16_t _7 [0x10]; // 0x730
+
+        uint16_t reg [0x20]; // 0x8000 - 0x801f
     } named;
 };
 

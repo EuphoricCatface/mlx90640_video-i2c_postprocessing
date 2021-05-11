@@ -314,6 +314,15 @@ private:
         return le16toh(ram.word_[address - OFFSET]);
     }
 
+    unsigned short fetch_reg_address(int address){
+    	const int OFFSET = 0x8000;
+    	if (address < OFFSET || address >= OFFSET + 0x20){
+    		printf("bad register addr, %d\n", address);
+    		return 0;
+    	}
+    	return le16toh(ram.word_[address - OFFSET + 0x340]);
+    }
+
 
 public:
 	void init_frame_file(const char* path, int io_method, int fps){
