@@ -285,6 +285,7 @@ public:
 		// printf(" == TGC check == \n");
         if(ee243C.bf.TGC)
         	printf("Warning: TGC value present, which will be ignored\n");
+        //TODO: detect interleave mode and inform the user how lazy of a programmer I am
 
         return true;
     }
