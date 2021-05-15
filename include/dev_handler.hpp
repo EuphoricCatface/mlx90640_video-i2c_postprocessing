@@ -166,7 +166,38 @@ private: // getting to work
         if (-1 == xioctl(fd, VIDIOC_G_PARM, &parm)) {
     		errno_exit("VIDIOC_G_PARM");
         }
+
+		switch(fps){
+			case 0: // yeah I'm lazy :P
+				fract = (struct v4l2_fract){2, 1};
+				break;
+			case 1:
+				fract = (struct v4l2_fract){1, 1};
+				break;
+			case 2:
+				fract = (struct v4l2_fract){1, 2};
+				break;
+			case 8:
+				fract = (struct v4l2_fract){1, 8};
+				break;
+			case 16:
+				fract = (struct v4l2_fract){1, 16};
+				break;
+			case 32:
+				fract = (struct v4l2_fract){1, 32};
+				break;
+			case 64:
+				fract = (struct v4l2_fract){1, 64};
+				break;
+			default:
+				fprintf(stderr, "Warning: FPS unrecognized, defaulting to 4Hz\n");
+			case 4: // fall through
+				fract = (struct v4l2_fract){1, 4};
+				break;
+		}
         parm.parm.capture.timeperframe = fract;
+
+
         if (-1 == xioctl(fd, VIDIOC_S_PARM, &parm)) {
         	errno_exit("VIDIOC_S_PARM");
         }

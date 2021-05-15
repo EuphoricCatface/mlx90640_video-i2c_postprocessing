@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
 	char * nv_name = NULL;
 
 	char * fps_ = NULL;
-	int fps;
+	int fps = -1;
 
 	bool save = false;
 	char * save_path = NULL;
@@ -77,9 +77,8 @@ int main(int argc, char **argv) {
 	        break;
 
 	    case 'f':
-	        printf("fps option nyi");
 	        fps_ = optarg;
-	        fps = -1;
+	        fps = (int)std::stof(fps_);
 	        break;
 
 	    case 'S':
