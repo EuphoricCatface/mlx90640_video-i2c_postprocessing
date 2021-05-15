@@ -121,7 +121,6 @@ int main(int argc, char **argv) {
 	mlx.init_frame_file(device);
 
 	uint16_t To_int[0x300];
-	uint16_t pixel_raw[0x300];
 	FILE* save_LE16_frm;
 	FILE* save_pixel_raw;
 	if(save)
@@ -140,13 +139,12 @@ int main(int argc, char **argv) {
 		    for(int row = 0; row < 24; row++){
 			    for(int col = 0; col < 32; col++){
 				    To_int[row * 32 + col] = ((mlx.To_())[row * 32 + col] - 20) * 3000;
-				    pixel_raw[row * 32 + col] = (mlx.Pix_Raw_())[row * 32 + col];
 			    }
 		    }
 		    if(save)
 		        fwrite(To_int, sizeof(uint16_t), 0x300, save_LE16_frm);
 		    if(save_raw)
-		        fwrite(pixel_raw, sizeof(uint16_t), 0x300, save_pixel_raw);
+		        fwrite(mlx.Pix_Raw_(), sizeof(uint16_t), device->is_extended() ? 0x360 : 0x340, save_pixel_raw);
 		}
 
 	}
