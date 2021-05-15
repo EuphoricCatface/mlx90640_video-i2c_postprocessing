@@ -300,6 +300,22 @@ private: // getting to work
     	int rdsz_ = read(fd, (unsigned char *)(dest),
 		    //sizeof(dest) / sizeof(char)
 		    size);
+
+		switch(fps){
+			case -1:
+				break;
+			case 0:
+				usleep(2000);
+				break;
+			default:
+				if (fps > 0)
+					usleep(1000 / fps);
+				else {
+					fprintf(stderr, "FPS is negative\n");
+					exit(EXIT_FAILURE);
+				}
+		}
+
 		if(rdsz_ < size) {
 		    std::cout << "A frame did not reach its full size.\n";
 		    return false;
