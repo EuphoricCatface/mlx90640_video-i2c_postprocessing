@@ -10,19 +10,19 @@
 #include "mlx90640.hpp"
 #include "dev_handler.hpp"
 
-static const char short_options[] = "d:n:hmrf:s:x:C";
+static const char short_options[] = "d:n:hmrf:S:R:C";
 
 static const struct option
 long_options[] = {
-    { "device", required_argument,  NULL, 'd' },
-    { "nvram",  required_argument,  NULL, 'n' },
-    { "help",   no_argument,        NULL, 'h' },
-    { "mmap",   no_argument,        NULL, 'm' },
-    { "read",   no_argument,        NULL, 'r' },
-    { "fps",    required_argument,  NULL, 'f' },
-    { "save",   required_argument,  NULL, 's' },
-    { "raw_pix",required_argument,  NULL, 'x' },
-    { "ignore_EE_check", no_argument, NULL, 'C' },
+    { "device",     required_argument,  NULL, 'd' },
+    { "nvram",      required_argument,  NULL, 'n' },
+    { "help",       no_argument,        NULL, 'h' },
+    { "mmap",       no_argument,        NULL, 'm' },
+    { "read",       no_argument,        NULL, 'r' },
+    { "fps",        required_argument,  NULL, 'f' },
+    { "save",       required_argument,  NULL, 'S' },
+    { "save-raw",   required_argument,  NULL, 'R' },
+    { "ignore-EE-check",  no_argument,  NULL, 'C' },
     { 0, 0, 0, 0 }
 };
 
@@ -79,12 +79,12 @@ int main(int argc, char **argv) {
 	        fps = -1;
 	        break;
 
-	    case 's':
+	    case 'S':
 	        save = true;
 	        save_path = optarg;
 	        break;
 
-	    case 'x':
+	    case 'R':
 	        save_raw = true;
 	        save_raw_path = optarg;
 	        break;
