@@ -61,9 +61,9 @@ private:
             return false;
         ssize_t rdsz_ = read(fd, (unsigned char *)(ee.word_),
 	        sizeof(ee) / sizeof(char));
-    	std::cout << "EE: " << rdsz_ << " bytes read\n";
     	close(fd);
-    	return true;
+    	std::cout << "EE: " << rdsz_ << " bytes read\n";
+		return true;
     }
 
     unsigned short fetch_EE_address(int address){
@@ -77,10 +77,35 @@ private:
     }
 
 public:
-    bool init_ee(const char * path) {
+    bool init_ee(const char * path, bool ignore_ee_check) {
 		bool rtn = read_ee(path);
-		if(rtn == false)
+		if (rtn == false){
+			printf("NVMEM read error\n");
+			exit(EXIT_FAILURE);
+		}
+
+    	if (
+    		!ignore_ee_check
+    		&& ( memcmp(MLX_ID, &(ee.word_[0x07]), sizeof(MLX_ID) - 1)
+    			 || memcmp(REG_CONF_EE, &(ee.word_[0x0C]), sizeof(REG_CONF_EE) - 1) )
+		) {
+    		printf("Error: Device ID or Register configuration does not match.\n");
+			printf("First 16 words [0x2400:0x240F]:\n");
+			for (int i = 0; i < 0x10; i++)
+				printf("%04hX ", ee.word_[i]);
+			printf("\n");
+			printf("Example output:\n");
+			printf("00A2 699F 0000 2061 0005 0320 03E0 1728 8E4F 0187 048D 0000 1901 0000 0000 BE33\n");
+			printf("Possible reasons:\n");
+			printf("1) You have changed the configuration [0x240C:0x240F]\n");
+			printf("2) The ID of your device [0x2407:0x2409] is not known to the developer\n");
+			printf("3) I2C baud rate is set too fast for EEPROM operation\n");
+			printf("   (According to the datasheet, it has to be no faster than 0.4MHz)\n"); // Reading at 1MHz seems to be okay though
+			printf("4) Your device is not MLX90640\n");
+			printf("- If you believe the case is 1) or 2), try adding '--ignore_EE_check' option\n");
+			printf("- If 3) is the case, dump NVMEM with lower baud rate and then use the dumped file to run this program\n");
 			return false;
+		}
 
         union {
             uint16_t word_;

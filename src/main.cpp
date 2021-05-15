@@ -10,7 +10,7 @@
 #include "mlx90640.hpp"
 #include "dev_handler.hpp"
 
-static const char short_options[] = "d:n:hmrf:s:x:";
+static const char short_options[] = "d:n:hmrf:s:x:C";
 
 static const struct option
 long_options[] = {
@@ -22,6 +22,7 @@ long_options[] = {
     { "fps",    required_argument,  NULL, 'f' },
     { "save",   required_argument,  NULL, 's' },
     { "raw_pix",required_argument,  NULL, 'x' },
+    { "ignore_EE_check", no_argument, NULL, 'C' },
     { 0, 0, 0, 0 }
 };
 
@@ -40,6 +41,7 @@ int main(int argc, char **argv) {
 	char * save_raw_path = NULL;
 
 	int io_method = dev_handler::IO_METHOD_MMAP;
+	bool ignore_ee_check = false;
 
 	for (;;){
 	    int idx;
@@ -85,6 +87,11 @@ int main(int argc, char **argv) {
 	    case 'x':
 	        save_raw = true;
 	        save_raw_path = optarg;
+	        break;
+
+	    case 'C':
+	        ignore_ee_check = true;
+	        break;
 
 	    default:
 	        break;
@@ -96,7 +103,11 @@ int main(int argc, char **argv) {
 	    exit(EXIT_FAILURE);
 	}
 
-	device.init_ee(nv_name);
+	if(!device.init_ee(nv_name, ignore_ee_check)){
+	    printf("NVMEM initialization error\n");
+	    exit(EXIT_FAILURE);
+	}
+
 	device.init_frame_file(dev_name, io_method, fps);
 
 	uint16_t To_int[0x300];

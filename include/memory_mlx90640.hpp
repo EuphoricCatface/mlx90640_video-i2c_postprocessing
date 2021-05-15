@@ -3,6 +3,9 @@
 #ifndef __MEMORY_MLX90640_H__
 #define __MEMORY_MLX90640_H__
 
+#define MLX_ID "\x28\x17\x4f\x8e\x87\x01"
+#define REG_CONF_EE "\x01\x19\x00\x00\x00\x00\x33\xbe"
+
 union OCC_ROW_ {
     uint16_t word_;
     struct {
