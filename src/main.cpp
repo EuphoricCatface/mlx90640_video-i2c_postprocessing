@@ -27,6 +27,30 @@ long_options[] = {
     { 0, 0, 0, 0 }
 };
 
+static void usage(FILE *fp, int argc, char**argv)
+{
+    fprintf(fp,
+            "Usage: %s [options]\n\n"
+            "Options:\n"
+            "-d | --device PATH         [REQUIRED] Video device file path\n"
+            "           If the file appear to be not a device file,\n"
+            "           then the program will fall back to raw file read.\n"
+            "-n | --nvram PATH          [REQUIRED] NVRAM file path\n"
+            "-h | --help                Print this message\n"
+            "-m | --mmap                Use memory mapped buffers [default]\n"
+            "-r | --read                Use read() calls\n"
+            "-f | --fps                 Set feed update frequency [default: 4FPS]\n"
+            "               If device is raw file and fps is not given or -1,\n"
+            "               then the program will process the file as fast as possible.\n"
+            "-S | --save PATH           (Debug) Path to save artificially contrasted gray16-le raw feed\n"
+            "               Output = (Tobj - 20) * 3000\n"
+            "-R | --save-raw PATH       (Debug) Path to save raw frame data feed\n"
+            "-C | --ignore-EE-check     Skip NVRAM validity check\n"
+            "-X | --extended-format     (Raw file read only) Treat the file as 27 lines per frame\n"
+            "",
+            argv[0]);
+}
+
 int main(int argc, char **argv) {
 	mlx90640 mlx = mlx90640();
 	dev_handler* device;
@@ -68,6 +92,11 @@ int main(int argc, char **argv) {
 	        nv_name = optarg;
 	        break;
 
+	    case 'h':
+	        usage(stdout, argc, argv);
+	        exit(EXIT_SUCCESS);
+	        break;
+
 	    case 'm':
 	        io_method = dev_handler::IO_METHOD_MMAP;
 	        break;
@@ -100,12 +129,16 @@ int main(int argc, char **argv) {
 	        break;
 
 	    default:
+	        fprintf(stderr, "Unrecognized option: %c\n", c);
+	        usage(stdout, argc, argv);
+	        exit(EXIT_FAILURE);
 	        break;
 	    }
 	}
 
 	if(dev_name == NULL || nv_name == NULL){
-	    printf("Required option not given");
+	    printf("Required option not given\n");
+        usage(stdout, argc, argv);
 	    exit(EXIT_FAILURE);
 	}
 
