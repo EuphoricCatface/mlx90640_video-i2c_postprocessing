@@ -324,6 +324,7 @@ private:
 	int V_BE;
 	int gain_ram;
 
+	bool extended;
 	int subpage;
 
 public: // temporary for debug
@@ -355,6 +356,7 @@ public:
 	void init_frame_file(dev_handler* dev_){
 		dev = dev_;
 
+		extended = dev->is_extended();
 		dev->start_capturing();
 	}
 
@@ -392,14 +394,16 @@ public:
 		e = 1;
 		T_ar = std::pow((dTa + 273.15 + 25.0), 4); // assuming emissivity is 1
 
-		subpage = fetch_reg_address(0x8000) % 2;
+		if (extended)
+			subpage = fetch_reg_address(0x8000) % 2;
 	}
 
 	void process_pixel() {
 		for(int row = 0; row < 24; row++){
 			for(int col = 0; col < 32; col++){
 				int thispixel = row * 32 + col;
-				if ((row + col) % 2 != subpage)
+				if (extended &&
+					(row + col) % 2 != subpage)
 					continue; // discrepancy from datasheet: datasheet is 1-based index
 					// also we're assuming checkerboard pattern
 

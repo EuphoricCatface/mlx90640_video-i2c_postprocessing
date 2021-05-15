@@ -36,6 +36,11 @@ private:
 	bool init;
 	bool capturing;
 
+	bool extended;
+	// Based on whether the device output format is 26-line or 27-line.
+	// Only using user-provided value when parsing raw file.
+	// Overwritten while parsing v4l2 format.
+
 	struct buffer {
         void   *start;
         size_t  length;
@@ -43,10 +48,9 @@ private:
 	struct buffer *buffers;
 
 public:
-	dev_handler(int _io_method = -1, int _fps = -1) {
+	dev_handler(int _io_method = -1, int _fps = -1, bool extended_format = false)
+		: io_method(_io_method), fps(_fps), extended(extended_format) {
 		fd = -1;
-		io_method = _io_method;
-		fps = _fps;
 		is_dev = true;
 		open_ = false;
 		init = false;
@@ -117,6 +121,19 @@ private: // getting to work
         printf("Video width: %d, height: %d\n",
         		fmt.fmt.pix.width,
         		fmt.fmt.pix.height);
+        switch(fmt.fmt.pix.height){
+        	case 27:
+        		extended = true;
+        		break;
+        	case 26:
+        		extended = false;
+        		fprintf(stderr, "Warning: video feed doesn't appear to provide internal register information\n");
+        		fprintf(stderr, " - No proper \"subpage\" compensation available!\n");
+        		break;
+        	default:
+        		fprintf(stderr, "Wrong video height: %d\n", fmt.fmt.pix.height);
+        		exit(EXIT_FAILURE);
+        }
 
         switch (io_method) {
         case IO_METHOD_READ:
@@ -248,10 +265,11 @@ private: // getting to work
 	}
 
     bool read_raw(void * dest){
+    	int size = extended ? 0x6c0 : 0x680;
     	int rdsz_ = read(fd, (unsigned char *)(dest),
 		    //sizeof(dest) / sizeof(char)
-		    0x6c0);
-		if(rdsz_ < 0x6c0) {
+		    size);
+		if(rdsz_ < size) {
 		    std::cout << "A frame did not reach its full size.\n";
 		    return false;
 		}
@@ -429,6 +447,10 @@ public:
 			}
 		} while (!read_v4l2_frame(dest));
 		return true;
+    }
+
+    bool is_extended(void){
+    	return extended;
     }
 };
 

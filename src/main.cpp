@@ -10,7 +10,7 @@
 #include "mlx90640.hpp"
 #include "dev_handler.hpp"
 
-static const char short_options[] = "d:n:hmrf:S:R:C";
+static const char short_options[] = "d:n:hmrf:S:R:CX";
 
 static const struct option
 long_options[] = {
@@ -23,6 +23,7 @@ long_options[] = {
     { "save",       required_argument,  NULL, 'S' },
     { "save-raw",   required_argument,  NULL, 'R' },
     { "ignore-EE-check",  no_argument,  NULL, 'C' },
+    { "extended-format",  no_argument,  NULL, 'X' },
     { 0, 0, 0, 0 }
 };
 
@@ -43,6 +44,7 @@ int main(int argc, char **argv) {
 
 	int io_method = dev_handler::IO_METHOD_MMAP;
 	bool ignore_ee_check = false;
+	bool extended_format = false;
 
 	for (;;){
 	    int idx;
@@ -94,6 +96,10 @@ int main(int argc, char **argv) {
 	        ignore_ee_check = true;
 	        break;
 
+	    case 'X':
+	        extended_format = true;
+	        break;
+
 	    default:
 	        break;
 	    }
@@ -104,7 +110,7 @@ int main(int argc, char **argv) {
 	    exit(EXIT_FAILURE);
 	}
 
-    device = new dev_handler(io_method, fps);
+    device = new dev_handler(io_method, fps, extended_format);
     device->init_frame_file(dev_name);
 
 	if(!mlx.init_ee(nv_name, ignore_ee_check)){
