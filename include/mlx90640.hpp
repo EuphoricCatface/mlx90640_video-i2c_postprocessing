@@ -14,7 +14,7 @@
 class mlx90640 {
 public:
 	mlx90640() { dev = nullptr; }
-	~mlx90640() { if(dev != nullptr) delete dev;}
+	~mlx90640() {}
 
 private:
 	mlx90640_nvmem_ ee;
@@ -352,9 +352,8 @@ private:
 
 
 public:
-	void init_frame_file(const char* path, int io_method, int fps){
-		dev = new dev_handler(io_method, fps);
-		dev->init_frame_file(path);
+	void init_frame_file(dev_handler* dev_){
+		dev = dev_;
 
 		dev->start_capturing();
 	}

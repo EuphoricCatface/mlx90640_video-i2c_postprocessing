@@ -27,7 +27,8 @@ long_options[] = {
 };
 
 int main(int argc, char **argv) {
-	mlx90640 device = mlx90640();
+	mlx90640 mlx = mlx90640();
+	dev_handler* device;
 
 	char * dev_name = NULL;
 	char * nv_name = NULL;
@@ -103,12 +104,15 @@ int main(int argc, char **argv) {
 	    exit(EXIT_FAILURE);
 	}
 
-	if(!device.init_ee(nv_name, ignore_ee_check)){
+    device = new dev_handler(io_method, fps);
+    device->init_frame_file(dev_name);
+
+	if(!mlx.init_ee(nv_name, ignore_ee_check)){
 	    printf("NVMEM initialization error\n");
 	    exit(EXIT_FAILURE);
 	}
 
-	device.init_frame_file(dev_name, io_method, fps);
+	mlx.init_frame_file(device);
 
 	uint16_t To_int[0x300];
 	uint16_t pixel_raw[0x300];
@@ -120,17 +124,17 @@ int main(int argc, char **argv) {
 	    save_pixel_raw = fopen(save_raw_path, "wb");
 
 	while(1){
-	    if(!device.process_frame_file())
+	    if(!mlx.process_frame_file())
 	        break;
 
-	    device.process_frame();
-	    device.process_pixel();
+	    mlx.process_frame();
+	    mlx.process_pixel();
 
         if(save || save_raw){
 		    for(int row = 0; row < 24; row++){
 			    for(int col = 0; col < 32; col++){
-				    To_int[row * 32 + col] = ((device.To_())[row * 32 + col] - 20) * 3000;
-				    pixel_raw[row * 32 + col] = (device.Pix_Raw_())[row * 32 + col];
+				    To_int[row * 32 + col] = ((mlx.To_())[row * 32 + col] - 20) * 3000;
+				    pixel_raw[row * 32 + col] = (mlx.Pix_Raw_())[row * 32 + col];
 			    }
 		    }
 		    if(save)
@@ -148,5 +152,7 @@ int main(int argc, char **argv) {
     if(save_raw){
         fclose(save_pixel_raw);
     }
+
+    delete device;
 	return 0;
 }
