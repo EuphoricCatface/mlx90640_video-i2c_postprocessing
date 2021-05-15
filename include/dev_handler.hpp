@@ -90,7 +90,8 @@ private: // getting to work
         }
 
         if (!S_ISCHR(st.st_mode)) {
-            fprintf(stderr, "%s is not a device\n", path);
+            fprintf(stderr, "Warning: %s is not a device.\n", path);
+            fprintf(stderr, "Warning: Falling back to raw file parsing.\n");
             is_dev = false;
         }
 
