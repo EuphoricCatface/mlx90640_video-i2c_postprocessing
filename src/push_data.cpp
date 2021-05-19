@@ -148,7 +148,7 @@ int main(int argc, char *argv[]) {
     /* Create the empty pipeline */
     data.pipeline = gst_pipeline_new ("test-pipeline");
 
-    if (!data.pipeline || !data.app_source || !data.gl_upload ||
+    if (!data.pipeline || !data.app_source || !data.video_queue || !data.gl_upload ||
             !data.gl_colorconvert || !data.gl_colorscale || !data.gl_effects_heat ||
             !data.gl_download || !data.video_sink) {
         g_printerr ("Not all elements could be created.\n");
@@ -163,10 +163,12 @@ int main(int argc, char *argv[]) {
     g_signal_connect (data.app_source, "enough-data", G_CALLBACK (stop_feed), &data);
 
     /* Link all elements because they have "Always" pads */
-    gst_bin_add_many (GST_BIN (data.pipeline), data.pipeline, data.app_source, data.gl_upload,
+    gst_bin_add_many (GST_BIN (data.pipeline), data.pipeline,
+            data.app_source, data.video_queue, data.gl_upload,
             data.gl_colorconvert, data.gl_colorscale, data.gl_effects_heat,
             data.gl_download, data.video_sink, NULL);
-    if (gst_element_link_many (data.pipeline, data.app_source, data.gl_upload,
+    if (gst_element_link_many (data.pipeline,
+            data.app_source, data.video_queue, data.gl_upload,
             data.gl_colorconvert, data.gl_colorscale, data.gl_effects_heat,
             data.gl_download, data.video_sink, NULL) != TRUE) {
         g_printerr ("Elements could not be linked.\n");
