@@ -92,6 +92,18 @@ public:
         return true;
     }
 
+    enum PIX_NOTE {
+        MIN_T,
+        MAX_T,
+        SCENE_CENTER
+    };
+
+    struct pixel {
+        int x;
+        int y;
+        double T;
+    };
+
 private:
     double dV;
     double V_PTAT_art;
@@ -103,12 +115,15 @@ private:
     double pix[0x300];
     double To[0x300];
 
+    pixel pix_list[3];
+
 public:
     void process_frame(void);
     void process_pixel(void);
 
     const double * To_() { return To; }
     const uint16_t * Pix_Raw_() { return ram.word_; }
+    const pixel * pix_notable() { return pix_list; }
 
 };
 

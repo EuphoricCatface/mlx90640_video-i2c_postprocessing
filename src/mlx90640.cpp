@@ -304,6 +304,9 @@ void mlx90640::process_frame(void) {
 }
 
 void mlx90640::process_pixel(void) {
+    double t_min = HUGE_VAL;
+    double t_max = -HUGE_VAL;
+
     for (int row = 0; row < 24; row++) {
         for (int col = 0; col < 32; col++) {
             int thispixel = row * 32 + col;
@@ -318,6 +321,24 @@ void mlx90640::process_pixel(void) {
                   * (1 + K_Ta[thispixel] * dTa)
                   * (1 + K_V[row%2][col%2] * dV);
             To[thispixel] = pow((pix[thispixel] / a_ref[thispixel] + T_ar), 0.25) - 273.15;
+
+            if (To[thispixel] < t_min){
+                t_min = To[thispixel];
+                pix_list[MIN_T].x = col;
+                pix_list[MIN_T].y = row;
+                pix_list[MIN_T].T = To[thispixel];
+            }
+
+            if (To[thispixel] > t_max){
+                t_max = To[thispixel];
+                pix_list[MAX_T].x = col;
+                pix_list[MAX_T].y = row;
+                pix_list[MAX_T].T = To[thispixel];
+            }
         }
     }
+
+    pix_list[SCENE_CENTER].x = 16;
+    pix_list[SCENE_CENTER].y = 12;
+    pix_list[SCENE_CENTER].T = To[12 * 32 + 16];
 }
