@@ -1,5 +1,7 @@
 mlx90640_video_i2c_postprocessing_sources = [
   'main.cpp',
+  'mlx90640.cpp',
+  'dev_handler.cpp'
 ]
 
 mlx90640_video_i2c_postprocessing_deps = [
