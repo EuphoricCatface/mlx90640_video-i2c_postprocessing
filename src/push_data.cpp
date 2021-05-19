@@ -1,5 +1,5 @@
 #include <gst/gst.h>
-#include <gst/audio/audio.h>
+#include <gst/video/video.h>
 #include <string.h>
 
 #define CHUNK_SIZE 1024   /* Amount of bytes we are sending in each buffer */
@@ -125,8 +125,8 @@ int main(int argc, char *argv[]) {
     CustomData data;
     GstPad *tee_audio_pad, *tee_video_pad, *tee_app_pad;
     GstPad *queue_audio_pad, *queue_video_pad, *queue_app_pad;
-    GstAudioInfo info;
-    GstCaps *audio_caps;
+    GstVideoInfo info;
+    GstCaps *video_caps;
     GstBus *bus;
 
     /* Initialize cumstom data structure */
@@ -158,9 +158,9 @@ int main(int argc, char *argv[]) {
     }
 
     /* Configure appsrc */
-    gst_audio_info_set_format (&info, GST_AUDIO_FORMAT_S16, SAMPLE_RATE, 1, NULL);
-    audio_caps = gst_audio_info_to_caps (&info);
-    g_object_set (data.app_source, "caps", audio_caps, "format", GST_FORMAT_TIME, NULL);
+    gst_video_info_set_format (&info, GST_VIDEO_FORMAT_GRAY16_LE, 32, 24);
+    video_caps = gst_video_info_to_caps (&info);
+    g_object_set (data.app_source, "caps", video_caps, "format", GST_FORMAT_TIME, NULL);
     g_signal_connect (data.app_source, "need-data", G_CALLBACK (start_feed), &data);
     g_signal_connect (data.app_source, "enough-data", G_CALLBACK (stop_feed), &data);
 
