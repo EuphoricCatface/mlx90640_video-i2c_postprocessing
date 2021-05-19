@@ -123,8 +123,6 @@ static void error_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
 
 int main(int argc, char *argv[]) {
     CustomData data;
-    GstPad *tee_audio_pad, *tee_video_pad, *tee_app_pad;
-    GstPad *queue_audio_pad, *queue_video_pad, *queue_app_pad;
     GstVideoInfo info;
     GstCaps *video_caps;
     GstBus *bus;
