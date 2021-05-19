@@ -1,12 +1,12 @@
 #include "mlx90640.hpp"
 
-void mlx90640::print_ee(void){
-    for(int i=0; i<0x340; i++)
+void mlx90640::print_ee(void) {
+    for (int i=0; i<0x340; i++)
     {
         char buffer[5];
         std::snprintf(buffer, 5, "%04hX", ee.word_[i]);
         std::cout << buffer;
-        if(i % 16 == 15)
+        if (i % 16 == 15)
             std::cout << "\n";
         else
             std::cout << " ";
@@ -15,7 +15,7 @@ void mlx90640::print_ee(void){
 
 bool mlx90640::read_ee(const char * path) {
     int fd = open(path, O_RDONLY);
-    if(fd == -1)
+    if (fd == -1)
         return false;
     ssize_t rdsz_ = read(fd, (unsigned char *)(ee.word_),
         sizeof(ee) / sizeof(char));
@@ -27,7 +27,7 @@ bool mlx90640::read_ee(const char * path) {
 unsigned short mlx90640::fetch_EE_address(int address) {
     const int OFFSET = 0x2400;
 
-    if(address < OFFSET || address >= OFFSET + 0x340){
+    if (address < OFFSET || address >= OFFSET + 0x340) {
         printf("bad EE addr, %d.\n", address);
         return 0;
     }
@@ -36,7 +36,7 @@ unsigned short mlx90640::fetch_EE_address(int address) {
 
 bool mlx90640::init_ee(const char * path, bool ignore_ee_check) {
     bool rtn = read_ee(path);
-    if (rtn == false){
+    if (rtn == false) {
         printf("NVMEM read error\n");
         exit(EXIT_FAILURE);
     }
@@ -177,7 +177,7 @@ bool mlx90640::init_ee(const char * path, bool ignore_ee_check) {
 
     // printf(" == K_Ta <frame> == \n");
     int K_Ta_PIX[0x300];
-    for(int i=0; i < 0x300; i++){
+    for (int i=0; i < 0x300; i++) {
         K_Ta_PIX[i] = ee.named.ee_PIX[i].bf.K_Ta;
     }
 
@@ -190,8 +190,8 @@ bool mlx90640::init_ee(const char * path, bool ignore_ee_check) {
     K_Ta_2x2[0][1] = ee2437.bf.K_Ta_rEcO;
     K_Ta_2x2[1][1] = ee2437.bf.K_Ta_rOcO;
 
-    for(int row = 0; row < 24; row++){
-        for(int col = 0; col < 32; col++){
+    for (int row = 0; row < 24; row++) {
+        for (int col = 0; col < 32; col++) {
             int K_Ta_int = K_Ta_2x2[row%2][col%2] + (K_Ta_PIX[row * 32 + col] << K_Ta_scale2);
             K_Ta[row * 24 + col]
                 = (double)(K_Ta_int)
@@ -206,20 +206,20 @@ bool mlx90640::init_ee(const char * path, bool ignore_ee_check) {
     unsigned offset_rem_scale = ee2410.bf.scale_Occ_rem;
     int offset_row[24];
     int offset_col[32];
-    for(int row_ = 0; row_ < 24/4; row_++){
+    for (int row_ = 0; row_ < 24/4; row_++) {
         offset_row[4*row_] = ee.named.OCC_ROW[row_].bf.OCC_ROW_1_;
         offset_row[4*row_+1] = ee.named.OCC_ROW[row_].bf.OCC_ROW_2_;
         offset_row[4*row_+2] = ee.named.OCC_ROW[row_].bf.OCC_ROW_3_;
         offset_row[4*row_+3] = ee.named.OCC_ROW[row_].bf.OCC_ROW_4_;
     }
-    for(int col_ = 0; col_ < 32/4; col_++){
+    for (int col_ = 0; col_ < 32/4; col_++) {
         offset_col[4*col_] = ee.named.OCC_COL[col_].bf.OCC_COL_1_;
         offset_col[4*col_+1] = ee.named.OCC_COL[col_].bf.OCC_COL_2_;
         offset_col[4*col_+2] = ee.named.OCC_COL[col_].bf.OCC_COL_3_;
         offset_col[4*col_+3] = ee.named.OCC_COL[col_].bf.OCC_COL_4_;
     }
-    for(int row = 0; row < 24; row++){
-        for(int col = 0; col < 32; col++){
+    for (int row = 0; row < 24; row++) {
+        for (int col = 0; col < 32; col++) {
             offset_ref[row * 32 + col] =
                 offset_avg +
                 (offset_row[row] << offset_row_scale) +
@@ -238,22 +238,22 @@ bool mlx90640::init_ee(const char * path, bool ignore_ee_check) {
 
     int a_row[24];
     int a_col[32];
-    for(int row_ = 0; row_ < 24/4; row_++){
+    for (int row_ = 0; row_ < 24/4; row_++) {
         a_row[4*row_] = ee.named.ACC_ROW[row_].bf.ACC_ROW_1_;
         a_row[4*row_+1] = ee.named.ACC_ROW[row_].bf.ACC_ROW_2_;
         a_row[4*row_+2] = ee.named.ACC_ROW[row_].bf.ACC_ROW_3_;
         a_row[4*row_+3] = ee.named.ACC_ROW[row_].bf.ACC_ROW_4_;
     }
-    for(int col_ = 0; col_ < 32/4; col_++){
+    for (int col_ = 0; col_ < 32/4; col_++) {
         a_col[4*col_] = ee.named.ACC_COL[col_].bf.ACC_COL_1_;
         a_col[4*col_+1] = ee.named.ACC_COL[col_].bf.ACC_COL_2_;
         a_col[4*col_+2] = ee.named.ACC_COL[col_].bf.ACC_COL_3_;
         a_col[4*col_+3] = ee.named.ACC_COL[col_].bf.ACC_COL_4_;
     }
-    for(int row = 0; row < 24; row++){
-        for(int col = 0; col < 32; col++){
+    for (int row = 0; row < 24; row++) {
+        for (int col = 0; col < 32; col++) {
             int a_rem = (ee.named.ee_PIX[row * 32 + col].word_ & 0x03f0) >> 4;
-            if(a_rem & 1<<5)
+            if (a_rem & 1<<5)
                 a_rem |= 0xffffffc0;
             int a_ref_int =
                 a_avg +
@@ -265,25 +265,25 @@ bool mlx90640::init_ee(const char * path, bool ignore_ee_check) {
     }
 
     // printf(" == TGC check == \n");
-    if(ee243C.bf.TGC)
+    if (ee243C.bf.TGC)
         printf("Warning: TGC value present, which will be ignored\n");
     //TODO: detect interleave mode and inform the user how lazy of a programmer I am
 
     return true;
 }
 
-unsigned short mlx90640::fetch_RAM_address(int address){
+unsigned short mlx90640::fetch_RAM_address(int address) {
     const int OFFSET = 0x400;
-    if(address < OFFSET || address >= OFFSET + 0x340){
+    if (address < OFFSET || address >= OFFSET + 0x340) {
         printf("bad RAM addr, %d\n", address);
         return 0;
     }
     return le16toh(ram.word_[address - OFFSET]);
 }
 
-unsigned short mlx90640::fetch_reg_address(int address){
+unsigned short mlx90640::fetch_reg_address(int address) {
     const int OFFSET = 0x8000;
-    if (address < OFFSET || address >= OFFSET + 0x20){
+    if (address < OFFSET || address >= OFFSET + 0x20) {
         printf("bad register addr, %d\n", address);
         return 0;
     }
@@ -304,8 +304,8 @@ void mlx90640::process_frame(void) {
 }
 
 void mlx90640::process_pixel(void) {
-    for(int row = 0; row < 24; row++){
-        for(int col = 0; col < 32; col++){
+    for (int row = 0; row < 24; row++) {
+        for (int col = 0; col < 32; col++) {
             int thispixel = row * 32 + col;
             if (extended &&
                 (row + col) % 2 != subpage)

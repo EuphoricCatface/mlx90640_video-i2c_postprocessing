@@ -70,7 +70,7 @@ int main(int argc, char **argv) {
     bool ignore_ee_check = false;
     bool extended_format = false;
 
-    for (;;){
+    for (;;) {
         int idx;
         int c;
 
@@ -136,7 +136,7 @@ int main(int argc, char **argv) {
         }
     }
 
-    if(dev_name == NULL || nv_name == NULL){
+    if (dev_name == NULL || nv_name == NULL) {
         printf("Required option not given\n");
         usage(stdout, argc, argv);
         exit(EXIT_FAILURE);
@@ -145,7 +145,7 @@ int main(int argc, char **argv) {
     device = new dev_handler(io_method, fps, extended_format);
     device->init_frame_file(dev_name);
 
-    if(!mlx.init_ee(nv_name, ignore_ee_check)){
+    if (!mlx.init_ee(nv_name, ignore_ee_check)) {
         printf("NVMEM initialization error\n");
         exit(EXIT_FAILURE);
     }
@@ -155,37 +155,37 @@ int main(int argc, char **argv) {
     uint16_t To_int[0x300];
     FILE* save_LE16_frm;
     FILE* save_pixel_raw;
-    if(save)
+    if (save)
         save_LE16_frm = fopen(save_path, "wb");
-    if(save_raw)
+    if (save_raw)
         save_pixel_raw = fopen(save_raw_path, "wb");
 
-    while(1){
-        if(!mlx.process_frame_file())
+    while (1) {
+        if (!mlx.process_frame_file())
             break;
 
         mlx.process_frame();
         mlx.process_pixel();
 
-        if(save || save_raw){
-            for(int row = 0; row < 24; row++){
-                for(int col = 0; col < 32; col++){
+        if (save || save_raw) {
+            for (int row = 0; row < 24; row++) {
+                for (int col = 0; col < 32; col++) {
                     To_int[row * 32 + col] = ((mlx.To_())[row * 32 + col] - 20) * 3000;
                 }
             }
-            if(save)
+            if (save)
                 fwrite(To_int, sizeof(uint16_t), 0x300, save_LE16_frm);
-            if(save_raw)
+            if (save_raw)
                 fwrite(mlx.Pix_Raw_(), sizeof(uint16_t), device->is_extended() ? 0x360 : 0x340, save_pixel_raw);
         }
 
     }
 
     printf("closing\n");
-    if(save){
+    if (save) {
         fclose(save_LE16_frm);
     }
-    if(save_raw){
+    if (save_raw) {
         fclose(save_pixel_raw);
     }
 

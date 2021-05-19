@@ -72,15 +72,15 @@ private:
     unsigned short fetch_reg_address(int address);
 
 public:
-    void init_frame_file(dev_handler* dev_){
+    void init_frame_file(dev_handler* dev_) {
         dev = dev_;
 
         extended = dev->is_extended();
         dev->start_capturing();
     }
 
-    bool process_frame_file(){
-        if(!dev->read_frame_file(ram.word_))
+    bool process_frame_file() {
+        if (!dev->read_frame_file(ram.word_))
             return false;
 
         VDD_raw = ram.named.VDD_raw;

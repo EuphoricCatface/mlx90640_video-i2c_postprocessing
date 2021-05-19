@@ -38,7 +38,7 @@ void dev_handler::open_device(const char * path) {
     printf("Video width: %d, height: %d\n",
             fmt.fmt.pix.width,
             fmt.fmt.pix.height);
-    switch(fmt.fmt.pix.height){
+    switch (fmt.fmt.pix.height) {
         case 27:
             extended = true;
             break;
@@ -84,7 +84,7 @@ void dev_handler::init_v4l2_device(void) {
         errno_exit("VIDIOC_G_PARM");
     }
 
-    switch(fps){
+    switch (fps) {
         case 0: // yeah I'm lazy :P
             fract = (struct v4l2_fract){2, 1};
             break;
@@ -219,7 +219,7 @@ bool dev_handler::read_raw(void * dest) {
         //sizeof(dest) / sizeof(char)
         size);
 
-    switch(fps){
+    switch (fps) {
         case -1:
             break;
         case 0:
@@ -377,7 +377,7 @@ void dev_handler::start_capturing(void) {
     capturing = true;
 }
 
-bool dev_handler::read_frame_file(void * dest){
+bool dev_handler::read_frame_file(void * dest) {
     if(is_dev == false)
         return read_raw(dest);
 

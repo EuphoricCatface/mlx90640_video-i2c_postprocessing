@@ -58,10 +58,10 @@ public:
     }
     ~dev_handler() {
         if (is_dev) {
-            if(capturing) stop_capturing();
-            if(init) uninit_device();
+            if (capturing) stop_capturing();
+            if (init) uninit_device();
         }
-        if(open_) close_device();
+        if (open_) close_device();
     }
 
 private: // basic tools
@@ -102,7 +102,7 @@ public:
     void start_capturing(void);
     bool read_frame_file(void * dest);
 
-    bool is_extended(void){
+    bool is_extended(void) {
         return extended;
     }
 };
