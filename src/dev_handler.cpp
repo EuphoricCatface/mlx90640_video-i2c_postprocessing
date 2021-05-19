@@ -108,7 +108,8 @@ void dev_handler::init_v4l2_device(void) {
             break;
         default:
             fprintf(stderr, "Warning: FPS unrecognized, defaulting to 4Hz\n");
-        case 4: // fall through
+            // fall through
+        case 4:
             fract = (struct v4l2_fract){1, 4};
             break;
     }

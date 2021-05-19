@@ -27,7 +27,7 @@ long_options[] = {
     { 0, 0, 0, 0 }
 };
 
-static void usage(FILE *fp, int argc, char**argv)
+static void usage(FILE *fp, int, char**argv)
 {
     fprintf(fp,
             "Usage: %s [options]\n\n"
