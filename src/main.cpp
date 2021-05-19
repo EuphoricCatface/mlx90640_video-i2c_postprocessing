@@ -1,5 +1,6 @@
 #include <iostream>
 #include <cstdio>
+#include <cfloat>
 #include <fcntl.h>
 #include <unistd.h>
 #include <endian.h>
@@ -175,7 +176,26 @@ int main(int argc, char **argv) {
 
             for (int row = 0; row < 24; row++) {
                 for (int col = 0; col < 32; col++) {
-                    To_int[row * 32 + col] = a * ((mlx.To_())[row * 32 + col] - b);
+                    double result = a * ((mlx.To_())[row * 32 + col] - b);
+                    if (result > 65535.5 + DBL_EPSILON) {
+                        printf("MAPPING ERROR: result is bigger than 65535.5!\n");
+                        printf("min: %lf, max: %lf, To: %lf, Result: %lf\n",
+                            pixels[mlx90640::MIN_T].T,
+                            pixels[mlx90640::MAX_T].T,
+                            (mlx.To_())[row * 32 + col],
+                            result);
+                        result = 65535;
+                    }
+                    if (result < -0.5) {
+                        printf("MAPPING ERROR: result is smaller than -0.5!\n");
+                        printf("min: %lf, max: %lf, To: %lf, Result: %lf\n",
+                            pixels[mlx90640::MIN_T].T,
+                            pixels[mlx90640::MAX_T].T,
+                            (mlx.To_())[row * 32 + col],
+                            result);
+                        result = 0;
+                    }
+                    To_int[row * 32 + col] = result;
                 }
             }
             if (save)
