@@ -164,39 +164,17 @@ int main(int argc, char *argv[]) {
     g_signal_connect (data.app_source, "need-data", G_CALLBACK (start_feed), &data);
     g_signal_connect (data.app_source, "enough-data", G_CALLBACK (stop_feed), &data);
 
-    /* Link all elements that can be automatically linked because they have "Always" pads */
-    gst_bin_add_many (GST_BIN (data.pipeline), data.app_source, data.tee, data.audio_queue, data.audio_convert1, data.audio_resample,
-            data.audio_sink, data.video_queue, data.audio_convert2, data.visual, data.video_convert, data.video_sink, data.app_queue,
-            data.app_sink, NULL);
-    if (gst_element_link_many (data.app_source, data.tee, NULL) != TRUE ||
-            gst_element_link_many (data.audio_queue, data.audio_convert1, data.audio_resample, data.audio_sink, NULL) != TRUE ||
-            gst_element_link_many (data.video_queue, data.audio_convert2, data.visual, data.video_convert, data.video_sink, NULL) != TRUE ||
-            gst_element_link_many (data.app_queue, data.app_sink, NULL) != TRUE) {
+    /* Link all elements because they have "Always" pads */
+    gst_bin_add_many (GST_BIN (data.pipeline), data.pipeline, data.app_source, data.gl_upload,
+            data.gl_colorconvert, data.gl_colorscale, data.gl_effects_heat,
+            data.gl_download, data.video_sink, NULL);
+    if (gst_element_link_many (data.pipeline, data.app_source, data.gl_upload,
+            data.gl_colorconvert, data.gl_colorscale, data.gl_effects_heat,
+            data.gl_download, data.video_sink, NULL) != TRUE) {
         g_printerr ("Elements could not be linked.\n");
         gst_object_unref (data.pipeline);
         return -1;
     }
-
-    /* Manually link the Tee, which has "Request" pads */
-    tee_audio_pad = gst_element_get_request_pad (data.tee, "src_%u");
-    g_print ("Obtained request pad %s for audio branch.\n", gst_pad_get_name (tee_audio_pad));
-    queue_audio_pad = gst_element_get_static_pad (data.audio_queue, "sink");
-    tee_video_pad = gst_element_get_request_pad (data.tee, "src_%u");
-    g_print ("Obtained request pad %s for video branch.\n", gst_pad_get_name (tee_video_pad));
-    queue_video_pad = gst_element_get_static_pad (data.video_queue, "sink");
-    tee_app_pad = gst_element_get_request_pad (data.tee, "src_%u");
-    g_print ("Obtained request pad %s for app branch.\n", gst_pad_get_name (tee_app_pad));
-    queue_app_pad = gst_element_get_static_pad (data.app_queue, "sink");
-    if (gst_pad_link (tee_audio_pad, queue_audio_pad) != GST_PAD_LINK_OK ||
-            gst_pad_link (tee_video_pad, queue_video_pad) != GST_PAD_LINK_OK ||
-            gst_pad_link (tee_app_pad, queue_app_pad) != GST_PAD_LINK_OK) {
-        g_printerr ("Tee could not be linked\n");
-        gst_object_unref (data.pipeline);
-        return -1;
-    }
-    gst_object_unref (queue_audio_pad);
-    gst_object_unref (queue_video_pad);
-    gst_object_unref (queue_app_pad);
 
     /* Instruct the bus to emit signals for each received message, and connect to the interesting signals */
     bus = gst_element_get_bus (data.pipeline);
