@@ -310,26 +310,28 @@ void mlx90640::process_pixel(void) {
     for (int row = 0; row < 24; row++) {
         for (int col = 0; col < 32; col++) {
             int thispixel = row * 32 + col;
-            if (extended &&
-                (row + col) % 2 != subpage)
-                continue; // discrepancy from datasheet: datasheet is 1-based index
+            if (!extended ||
+                (row + col) % 2 == subpage) {
+                // discrepancy from datasheet: datasheet is 1-based index
                 // also we're assuming checkerboard pattern
 
-            pix[thispixel]
-                = (double)ram.named.ram_PIX[thispixel] * gain
-                - (double)offset_ref[thispixel]
-                  * (1 + K_Ta[thispixel] * dTa)
-                  * (1 + K_V[row%2][col%2] * dV);
-            To[thispixel] = pow((pix[thispixel] / a_ref[thispixel] + T_ar), 0.25) - 273.15;
+                pix[thispixel]
+                    = (double)ram.named.ram_PIX[thispixel] * gain
+                    - (double)offset_ref[thispixel]
+                      * (1 + K_Ta[thispixel] * dTa)
+                      * (1 + K_V[row%2][col%2] * dV);
+                To[thispixel] = pow((pix[thispixel] / a_ref[thispixel] + T_ar), 0.25) - 273.15;
+            }
 
-            if (To[thispixel] < t_min){
+            // min/max calculation has to be done whole frame regardless of subpage
+            if (To[thispixel] < t_min) {
                 t_min = To[thispixel];
                 pix_list[MIN_T].x = col;
                 pix_list[MIN_T].y = row;
                 pix_list[MIN_T].T = To[thispixel];
             }
 
-            if (To[thispixel] > t_max){
+            if (To[thispixel] > t_max) {
                 t_max = To[thispixel];
                 pix_list[MAX_T].x = col;
                 pix_list[MAX_T].y = row;
