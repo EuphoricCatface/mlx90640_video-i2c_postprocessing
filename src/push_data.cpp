@@ -189,14 +189,6 @@ int main(int argc, char *argv[]) {
     data.main_loop = g_main_loop_new (NULL, FALSE);
     g_main_loop_run (data.main_loop);
 
-    /* Release the request pads from the Tee, and unref them */
-    gst_element_release_request_pad (data.tee, tee_audio_pad);
-    gst_element_release_request_pad (data.tee, tee_video_pad);
-    gst_element_release_request_pad (data.tee, tee_app_pad);
-    gst_object_unref (tee_audio_pad);
-    gst_object_unref (tee_video_pad);
-    gst_object_unref (tee_app_pad);
-
     /* Free resources */
     gst_element_set_state (data.pipeline, GST_STATE_NULL);
     gst_object_unref (data.pipeline);
