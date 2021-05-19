@@ -52,134 +52,134 @@ static void usage(FILE *fp, int argc, char**argv)
 }
 
 int main(int argc, char **argv) {
-	mlx90640 mlx = mlx90640();
-	dev_handler* device;
+    mlx90640 mlx = mlx90640();
+    dev_handler* device;
 
-	char * dev_name = NULL;
-	char * nv_name = NULL;
+    char * dev_name = NULL;
+    char * nv_name = NULL;
 
-	char * fps_ = NULL;
-	int fps = -1;
+    char * fps_ = NULL;
+    int fps = -1;
 
-	bool save = false;
-	char * save_path = NULL;
-	bool save_raw = false;
-	char * save_raw_path = NULL;
+    bool save = false;
+    char * save_path = NULL;
+    bool save_raw = false;
+    char * save_raw_path = NULL;
 
-	int io_method = dev_handler::IO_METHOD_MMAP;
-	bool ignore_ee_check = false;
-	bool extended_format = false;
+    int io_method = dev_handler::IO_METHOD_MMAP;
+    bool ignore_ee_check = false;
+    bool extended_format = false;
 
-	for (;;){
-	    int idx;
-	    int c;
+    for (;;){
+        int idx;
+        int c;
 
-	    c = getopt_long(argc, argv,
-	                    short_options, long_options, &idx);
+        c = getopt_long(argc, argv,
+                        short_options, long_options, &idx);
 
-	    if (c == -1)
-	        break;
+        if (c == -1)
+            break;
 
-	    switch (c) {
-	    case 0: /* getopt_long() flag */
-	        break;
+        switch (c) {
+        case 0: /* getopt_long() flag */
+            break;
 
-	    case 'd':
-	        dev_name = optarg;
-	        break;
+        case 'd':
+            dev_name = optarg;
+            break;
 
-	    case 'n':
-	        nv_name = optarg;
-	        break;
+        case 'n':
+            nv_name = optarg;
+            break;
 
-	    case 'h':
-	        usage(stdout, argc, argv);
-	        exit(EXIT_SUCCESS);
-	        break;
+        case 'h':
+            usage(stdout, argc, argv);
+            exit(EXIT_SUCCESS);
+            break;
 
-	    case 'm':
-	        io_method = dev_handler::IO_METHOD_MMAP;
-	        break;
+        case 'm':
+            io_method = dev_handler::IO_METHOD_MMAP;
+            break;
 
-	    case 'r':
-	        io_method = dev_handler::IO_METHOD_READ;
-	        break;
+        case 'r':
+            io_method = dev_handler::IO_METHOD_READ;
+            break;
 
-	    case 'f':
-	        fps_ = optarg;
-	        fps = (int)std::stof(fps_);
-	        break;
+        case 'f':
+            fps_ = optarg;
+            fps = (int)std::stof(fps_);
+            break;
 
-	    case 'S':
-	        save = true;
-	        save_path = optarg;
-	        break;
+        case 'S':
+            save = true;
+            save_path = optarg;
+            break;
 
-	    case 'R':
-	        save_raw = true;
-	        save_raw_path = optarg;
-	        break;
+        case 'R':
+            save_raw = true;
+            save_raw_path = optarg;
+            break;
 
-	    case 'C':
-	        ignore_ee_check = true;
-	        break;
+        case 'C':
+            ignore_ee_check = true;
+            break;
 
-	    case 'X':
-	        extended_format = true;
-	        break;
+        case 'X':
+            extended_format = true;
+            break;
 
-	    default:
-	        fprintf(stderr, "Unrecognized option: %c\n", c);
-	        usage(stdout, argc, argv);
-	        exit(EXIT_FAILURE);
-	        break;
-	    }
-	}
+        default:
+            fprintf(stderr, "Unrecognized option: %c\n", c);
+            usage(stdout, argc, argv);
+            exit(EXIT_FAILURE);
+            break;
+        }
+    }
 
-	if(dev_name == NULL || nv_name == NULL){
-	    printf("Required option not given\n");
+    if(dev_name == NULL || nv_name == NULL){
+        printf("Required option not given\n");
         usage(stdout, argc, argv);
-	    exit(EXIT_FAILURE);
-	}
+        exit(EXIT_FAILURE);
+    }
 
     device = new dev_handler(io_method, fps, extended_format);
     device->init_frame_file(dev_name);
 
-	if(!mlx.init_ee(nv_name, ignore_ee_check)){
-	    printf("NVMEM initialization error\n");
-	    exit(EXIT_FAILURE);
-	}
+    if(!mlx.init_ee(nv_name, ignore_ee_check)){
+        printf("NVMEM initialization error\n");
+        exit(EXIT_FAILURE);
+    }
 
-	mlx.init_frame_file(device);
+    mlx.init_frame_file(device);
 
-	uint16_t To_int[0x300];
-	FILE* save_LE16_frm;
-	FILE* save_pixel_raw;
-	if(save)
-	    save_LE16_frm = fopen(save_path, "wb");
-	if(save_raw)
-	    save_pixel_raw = fopen(save_raw_path, "wb");
+    uint16_t To_int[0x300];
+    FILE* save_LE16_frm;
+    FILE* save_pixel_raw;
+    if(save)
+        save_LE16_frm = fopen(save_path, "wb");
+    if(save_raw)
+        save_pixel_raw = fopen(save_raw_path, "wb");
 
-	while(1){
-	    if(!mlx.process_frame_file())
-	        break;
+    while(1){
+        if(!mlx.process_frame_file())
+            break;
 
-	    mlx.process_frame();
-	    mlx.process_pixel();
+        mlx.process_frame();
+        mlx.process_pixel();
 
         if(save || save_raw){
-		    for(int row = 0; row < 24; row++){
-			    for(int col = 0; col < 32; col++){
-				    To_int[row * 32 + col] = ((mlx.To_())[row * 32 + col] - 20) * 3000;
-			    }
-		    }
-		    if(save)
-		        fwrite(To_int, sizeof(uint16_t), 0x300, save_LE16_frm);
-		    if(save_raw)
-		        fwrite(mlx.Pix_Raw_(), sizeof(uint16_t), device->is_extended() ? 0x360 : 0x340, save_pixel_raw);
-		}
+            for(int row = 0; row < 24; row++){
+                for(int col = 0; col < 32; col++){
+                    To_int[row * 32 + col] = ((mlx.To_())[row * 32 + col] - 20) * 3000;
+                }
+            }
+            if(save)
+                fwrite(To_int, sizeof(uint16_t), 0x300, save_LE16_frm);
+            if(save_raw)
+                fwrite(mlx.Pix_Raw_(), sizeof(uint16_t), device->is_extended() ? 0x360 : 0x340, save_pixel_raw);
+        }
 
-	}
+    }
 
     printf("closing\n");
     if(save){
@@ -190,5 +190,5 @@ int main(int argc, char **argv) {
     }
 
     delete device;
-	return 0;
+    return 0;
 }
