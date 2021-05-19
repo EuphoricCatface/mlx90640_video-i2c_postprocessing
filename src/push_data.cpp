@@ -157,20 +157,12 @@ int main(int argc, char *argv[]) {
         return -1;
     }
 
-    /* Configure wavescope */
-    g_object_set (data.visual, "shader", 0, "style", 0, NULL);
-
     /* Configure appsrc */
     gst_audio_info_set_format (&info, GST_AUDIO_FORMAT_S16, SAMPLE_RATE, 1, NULL);
     audio_caps = gst_audio_info_to_caps (&info);
     g_object_set (data.app_source, "caps", audio_caps, "format", GST_FORMAT_TIME, NULL);
     g_signal_connect (data.app_source, "need-data", G_CALLBACK (start_feed), &data);
     g_signal_connect (data.app_source, "enough-data", G_CALLBACK (stop_feed), &data);
-
-    /* Configure appsink */
-    g_object_set (data.app_sink, "emit-signals", TRUE, "caps", audio_caps, NULL);
-    g_signal_connect (data.app_sink, "new-sample", G_CALLBACK (new_sample), &data);
-    gst_caps_unref (audio_caps);
 
     /* Link all elements that can be automatically linked because they have "Always" pads */
     gst_bin_add_many (GST_BIN (data.pipeline), data.app_source, data.tee, data.audio_queue, data.audio_convert1, data.audio_resample,
