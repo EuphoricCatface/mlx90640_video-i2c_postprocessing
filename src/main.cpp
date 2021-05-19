@@ -42,8 +42,7 @@ static void usage(FILE *fp, int, char**argv)
             "-f | --fps                 Set feed update frequency [default: 4FPS]\n"
             "               If device is raw file and fps is not given or -1,\n"
             "               then the program will process the file as fast as possible.\n"
-            "-S | --save PATH           (Debug) Path to save artificially contrasted gray16-le raw feed\n"
-            "               Output = (Tobj - 20) * 3000\n"
+            "-S | --save PATH           (Debug) Path to save min-max mapped gray16-le raw feed\n"
             "-R | --save-raw PATH       (Debug) Path to save raw frame data feed\n"
             "-C | --ignore-EE-check     Skip NVRAM validity check\n"
             "-X | --extended-format     (Raw file read only) Treat the file as 27 lines per frame\n"
@@ -153,6 +152,7 @@ int main(int argc, char **argv) {
     mlx.init_frame_file(device);
 
     uint16_t To_int[0x300];
+    const mlx90640::pixel *pixels;
     FILE* save_LE16_frm;
     FILE* save_pixel_raw;
     if (save)
@@ -168,9 +168,14 @@ int main(int argc, char **argv) {
         mlx.process_pixel();
 
         if (save || save_raw) {
+            pixels = mlx.pix_notable();
+            // mapping: a(x-b) = range * (x-min) / (max - min)
+            double b = pixels[mlx90640::MIN_T].T;
+            double a = 65535.0 / (pixels[mlx90640::MAX_T].T - pixels[mlx90640::MIN_T].T);
+
             for (int row = 0; row < 24; row++) {
                 for (int col = 0; col < 32; col++) {
-                    To_int[row * 32 + col] = ((mlx.To_())[row * 32 + col] - 20) * 3000;
+                    To_int[row * 32 + col] = a * ((mlx.To_())[row * 32 + col] - b);
                 }
             }
             if (save)
