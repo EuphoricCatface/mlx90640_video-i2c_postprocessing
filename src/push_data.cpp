@@ -7,9 +7,13 @@
 
 /* Structure to contain all our information, so we can pass it to callbacks */
 typedef struct _CustomData {
-  GstElement *pipeline, *app_source, *tee, *audio_queue, *audio_convert1, *audio_resample, *audio_sink;
-  GstElement *video_queue, *audio_convert2, *visual, *video_convert, *video_sink;
-  GstElement *app_queue, *app_sink;
+    // gst-launch-1.0 filesrc location=~/extended_test
+    //                  ! rawvideoparse format=gray16-le width=32 height=24 framerate=4/1
+    //                  ! glupload ! glcolorconvert ! glcolorscale ! gleffects_heat
+    //                  ! gldownload ! video/x-raw, width=320, height=240 ! autovideosink
+  GstElement *pipeline, *app_source, *video_queue, *gl_upload;
+  GstElement *gl_colorconvert, *gl_colorscale, *gl_effects_heat;
+  GstElement *gl_download, *video_sink;
 
   guint64 num_samples;   /* Number of samples generated so far (for timestamp generation) */
   gfloat a, b, c, d;     /* For waveform generation */
@@ -134,26 +138,21 @@ int main(int argc, char *argv[]) {
   gst_init (&argc, &argv);
 
   /* Create the elements */
-  data.app_source = gst_element_factory_make ("appsrc", "audio_source");
-  data.tee = gst_element_factory_make ("tee", "tee");
-  data.audio_queue = gst_element_factory_make ("queue", "audio_queue");
-  data.audio_convert1 = gst_element_factory_make ("audioconvert", "audio_convert1");
-  data.audio_resample = gst_element_factory_make ("audioresample", "audio_resample");
-  data.audio_sink = gst_element_factory_make ("autoaudiosink", "audio_sink");
+  data.app_source = gst_element_factory_make ("appsrc", "mlx_source");
   data.video_queue = gst_element_factory_make ("queue", "video_queue");
-  data.audio_convert2 = gst_element_factory_make ("audioconvert", "audio_convert2");
-  data.visual = gst_element_factory_make ("wavescope", "visual");
-  data.video_convert = gst_element_factory_make ("videoconvert", "video_convert");
+  data.gl_upload = gst_element_factory_make("glupload", "gl_upload");
+  data.gl_colorconvert = gst_element_factory_make("glcolorconvert", "gl_colorconvert");
+  data.gl_colorscale = gst_element_factory_make("glcolorconvert", "gl_colorscale");
+  data.gl_effects_heat = gst_element_factory_make("gleffects_heat", "gl_effects_heat");
+  data.gl_download = gst_element_factory_make("gldownload", "gl_download");
   data.video_sink = gst_element_factory_make ("autovideosink", "video_sink");
-  data.app_queue = gst_element_factory_make ("queue", "app_queue");
-  data.app_sink = gst_element_factory_make ("appsink", "app_sink");
 
   /* Create the empty pipeline */
   data.pipeline = gst_pipeline_new ("test-pipeline");
 
-  if (!data.pipeline || !data.app_source || !data.tee || !data.audio_queue || !data.audio_convert1 ||
-      !data.audio_resample || !data.audio_sink || !data.video_queue || !data.audio_convert2 || !data.visual ||
-      !data.video_convert || !data.video_sink || !data.app_queue || !data.app_sink) {
+  if (!data.pipeline || !data.app_source || !data.gl_upload ||
+      !data.gl_colorconvert || !data.gl_colorscale || !data.gl_effects_heat ||
+      !data.gl_download || !data.video_sink) {
     g_printerr ("Not all elements could be created.\n");
     return -1;
   }
