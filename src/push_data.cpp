@@ -92,6 +92,7 @@ static void error_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
 }
 
 int init(void) {
+    _data = new CustomData;
     CustomData &data = *_data;
     GstVideoInfo info;
     GstCaps *video_caps;
