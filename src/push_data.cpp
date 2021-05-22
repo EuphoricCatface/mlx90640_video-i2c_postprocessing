@@ -19,6 +19,8 @@ typedef struct _CustomData {
 
     GstBuffer *buffer;
     GstMapInfo *map;
+
+    bool feed_running;
 } CustomData;
 
 static CustomData * _data = NULL;
@@ -42,6 +44,11 @@ bool arm_buffer(void) {
     /* Set the buffer's timestamp and duration */
     //TODO
 
+    /* TODO: Ideally, we can start & stop the camera,
+     * but let's just discard the data for the time being */
+    if (!_data->feed_running)
+        return TRUE; // eeeeeehhhh... we're *not* experiencing a problem, right?
+
     gst_buffer_unmap (_data->buffer, _data->map);
     _data->map = NULL;
 
@@ -60,16 +67,16 @@ bool arm_buffer(void) {
     return TRUE;
 }
 
-/* This signal callback triggers when appsrc needs data. Here, we add an idle handler
- * to the mainloop to start pushing data into the appsrc */
+/* This signal callback triggers when appsrc needs data. */
 static void start_feed (GstElement *source, guint size, CustomData *data) {
-    g_print ("Start feeding (not)\n");
+    g_print ("Start feeding\n");
+    data->feed_running = true;
 }
 
-/* This callback triggers when appsrc has enough data and we can stop sending.
- * We remove the idle handler from the mainloop */
+/* This callback triggers when appsrc has enough data and we can stop sending. */
 static void stop_feed (GstElement *source, CustomData *data) {
-    g_print ("Stop feeding (not)\n");
+    g_print ("Stop feeding\n");
+    data->feed_running = false;
 }
 
 /* This function is called when an error message is posted on the bus */
@@ -96,6 +103,7 @@ int init(void) {
     memset (&data, 0, sizeof (data));
     data.buffer = NULL;
     data.map = NULL;
+    data.feed_running = false;
 
     /* Initialize GStreamer */
     gst_init (NULL, NULL);
