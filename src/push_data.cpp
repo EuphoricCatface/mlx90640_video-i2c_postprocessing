@@ -1,9 +1,11 @@
 #include <gst/gst.h>
 #include <gst/video/video.h>
 #include <gst/app/gstappsrc.h>
-#include <string.h>
 
-#define CHUNK_SIZE 1024   /* Amount of bytes we are sending in each buffer */
+#include <string.h>
+#include <cstdint>
+
+#define CHUNK_SIZE (32 * 24 * 2)   /* Amount of bytes we are sending in each buffer */
 
 /* Structure to contain all our information, so we can pass it to callbacks */
 typedef struct _CustomData {
@@ -15,48 +17,40 @@ typedef struct _CustomData {
     GstElement *gl_colorconvert, *gl_colorscale, *gl_effects_heat;
     GstElement *gl_download, *video_sink;
 
-    gfloat a, b, c, d;     /* For waveform generation */
+    GstBuffer *buffer;
+    GstMapInfo *map;
 } CustomData;
 
-static CustomData * _data;
+static CustomData * _data = NULL;
 
-/* This method is called by the idle GSource in the mainloop, to feed CHUNK_SIZE bytes into appsrc.
- * The idle handler is added to the mainloop when appsrc requests us to start sending data (need-data signal)
- * and is removed when appsrc has enough data (enough-data signal).
- */
-static gboolean push_data (CustomData *data) {
-    GstBuffer *buffer;
-    GstFlowReturn ret;
-    int i;
-    GstMapInfo map;
-    gint16 *raw;
-    gint num_samples = CHUNK_SIZE / 2; /* Because each sample is 16 bits */
-    gfloat freq;
+uint16_t* get_userp(void) {
+    if (_data == NULL) return NULL;
 
     /* Create a new empty buffer */
-    buffer = gst_buffer_new_and_alloc (CHUNK_SIZE);
+    if (_data->buffer == NULL)
+        _data->buffer = gst_buffer_new_and_alloc (CHUNK_SIZE);
 
-    /* Set its timestamp and duration */
+    /* Return the data portion pointer of the buffer */
+    if (_data->map == NULL)
+        gst_buffer_map (_data->buffer, _data->map, GST_MAP_WRITE);
+
+    return (uint16_t *)(_data->map->data);
+}
+
+bool arm_buffer(void) {
+    GstFlowReturn ret;
+    /* Set the buffer's timestamp and duration */
     //TODO
 
-    /* Generate some psychodelic waveforms */
-    gst_buffer_map (buffer, &map, GST_MAP_WRITE);
-    raw = (gint16 *)map.data;
-    data->c += data->d;
-    data->d -= data->c / 1000;
-    freq = 1100 + 1000 * data->d;
-    for (i = 0; i < num_samples; i++) {
-        data->a += data->b;
-        data->b -= data->a / freq;
-        raw[i] = (gint16)(500 * data->a);
-    }
-    gst_buffer_unmap (buffer, &map);
+    gst_buffer_unmap (_data->buffer, _data->map);
+    _data->map = NULL;
 
     /* Push the buffer into the appsrc */
-    g_signal_emit_by_name (data->app_source, "push-buffer", buffer, &ret);
+    ret = gst_app_src_push_buffer((GstAppSrc *)(_data->app_source), _data->buffer);
 
     /* Free the buffer now that we are done with it */
-    gst_buffer_unref (buffer);
+    gst_buffer_unref (_data->buffer);
+    _data->buffer = NULL;
 
     if (ret != GST_FLOW_OK) {
         /* We got some error, stop sending data */
@@ -100,8 +94,8 @@ int init(void) {
 
     /* Initialize cumstom data structure */
     memset (&data, 0, sizeof (data));
-    data.b = 1; /* For waveform generation */
-    data.d = 1;
+    data.buffer = NULL;
+    data.map = NULL;
 
     /* Initialize GStreamer */
     gst_init (NULL, NULL);
@@ -156,6 +150,7 @@ int init(void) {
     gst_bus_add_signal_watch (bus);
     g_signal_connect (G_OBJECT (bus), "message::error", (GCallback)error_cb, &data);
     gst_object_unref (bus);
+
     return 0;
 }
 
