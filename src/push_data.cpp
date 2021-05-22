@@ -42,6 +42,9 @@ uint16_t* get_userp(void) {
 
 bool arm_buffer(void) {
     GstFlowReturn ret;
+
+    if (_data == NULL || _data->buffer == NULL || _data->map == NULL)
+        return false;
     /* Set the buffer's timestamp and duration */
     //TODO
 
@@ -164,12 +167,14 @@ int gst_init(void) {
 }
 
 void gst_start_running(void) {
+    if (_data == NULL) return;
     CustomData &data = *_data;
     /* Start playing the pipeline */
     gst_element_set_state (data.pipeline, GST_STATE_PLAYING);
 }
 
 void gst_cleanup(void) {
+    if (_data == NULL) return;
     CustomData &data = *_data;
     /* Free resources */
     gst_element_set_state (data.pipeline, GST_STATE_NULL);
