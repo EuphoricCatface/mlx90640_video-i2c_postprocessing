@@ -20,6 +20,8 @@ typedef struct _CustomData {
     gfloat a, b, c, d;     /* For waveform generation */
 } CustomData;
 
+static CustomData * _data;
+
 /* This method is called by the idle GSource in the mainloop, to feed CHUNK_SIZE bytes into appsrc.
  * The idle handler is added to the mainloop when appsrc requests us to start sending data (need-data signal)
  * and is removed when appsrc has enough data (enough-data signal).
@@ -93,8 +95,8 @@ static void error_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
     g_free (debug_info);
 }
 
-int main(int argc, char *argv[]) {
-    CustomData data;
+int init(void) {
+    CustomData &data = *_data;
     GstVideoInfo info;
     GstCaps *video_caps;
     GstBus *bus;
@@ -105,7 +107,7 @@ int main(int argc, char *argv[]) {
     data.d = 1;
 
     /* Initialize GStreamer */
-    gst_init (&argc, &argv);
+    gst_init (NULL, NULL);
 
     /* Create the elements */
     data.app_source = gst_element_factory_make ("appsrc", "mlx_source");
@@ -157,12 +159,19 @@ int main(int argc, char *argv[]) {
     gst_bus_add_signal_watch (bus);
     g_signal_connect (G_OBJECT (bus), "message::error", (GCallback)error_cb, &data);
     gst_object_unref (bus);
+    return 0;
+}
 
+void running(void) {
+    CustomData &data = *_data;
     /* Start playing the pipeline */
     gst_element_set_state (data.pipeline, GST_STATE_PLAYING);
+}
 
+void cleanup(void) {
+    CustomData &data = *_data;
     /* Free resources */
     gst_element_set_state (data.pipeline, GST_STATE_NULL);
     gst_object_unref (data.pipeline);
-    return 0;
+    delete(_data);
 }
