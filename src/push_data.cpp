@@ -80,22 +80,6 @@ static void stop_feed (GstElement *source, CustomData *data) {
     g_print ("Stop feeding (not)\n");
 }
 
-/* The appsink has received a buffer */
-static GstFlowReturn new_sample (GstElement *sink, CustomData *data) {
-    GstSample *sample;
-
-    /* Retrieve the buffer */
-    g_signal_emit_by_name (sink, "pull-sample", &sample);
-    if (sample) {
-        /* The only thing we do in this example is print a * to indicate a received buffer */
-        g_print ("*");
-        gst_sample_unref (sample);
-        return GST_FLOW_OK;
-    }
-
-    return GST_FLOW_ERROR;
-}
-
 /* This function is called when an error message is posted on the bus */
 static void error_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
     GError *err;
