@@ -41,10 +41,9 @@ bool mlx90640::init_ee(const char * path, bool ignore_ee_check) {
         exit(EXIT_FAILURE);
     }
 
-    if (
-        !ignore_ee_check
-        && ( memcmp(MLX_ID, &(ee.word_[0x07]), sizeof(MLX_ID) - 1)
-             || memcmp(REG_CONF_EE, &(ee.word_[0x0C]), sizeof(REG_CONF_EE) - 1) )
+    if (!ignore_ee_check
+            && ( memcmp(MLX_ID, &(ee.word_[0x07]), sizeof(MLX_ID) - 1)
+                || memcmp(REG_CONF_EE, &(ee.word_[0x0C]), sizeof(REG_CONF_EE) - 1) )
     ) {
         printf("Error: Device ID or Register configuration does not match.\n");
         printf("First 16 words [0x2400:0x240F]:\n");
@@ -311,10 +310,9 @@ void mlx90640::process_pixel(void) {
         for (int col = 0; col < 32; col++) {
             int thispixel = row * 32 + col;
             if (!extended ||
-                (row + col) % 2 == subpage) {
-                // discrepancy from datasheet: datasheet is 1-based index
-                // also we're assuming checkerboard pattern
-
+                    (row + col) % 2 == subpage) {
+                    // discrepancy from datasheet: datasheet is 1-based index
+                    // also we're assuming checkerboard pattern
                 pix[thispixel]
                     = (double)ram.named.ram_PIX[thispixel] * gain
                     - (double)offset_ref[thispixel]

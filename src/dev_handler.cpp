@@ -86,31 +86,31 @@ void dev_handler::init_v4l2_device(void) {
 
     switch (fps) {
         case 0: // yeah I'm lazy :P
-            fract = (struct v4l2_fract){2, 1};
+            fract.numerator=2, fract.denominator=1;
             break;
         case 1:
-            fract = (struct v4l2_fract){1, 1};
+            fract.numerator=1, fract.denominator=1;
             break;
         case 2:
-            fract = (struct v4l2_fract){1, 2};
+            fract.numerator=1, fract.denominator=2;
             break;
         case 8:
-            fract = (struct v4l2_fract){1, 8};
+            fract.numerator=1, fract.denominator=8;
             break;
         case 16:
-            fract = (struct v4l2_fract){1, 16};
+            fract.numerator=1, fract.denominator=16;
             break;
         case 32:
-            fract = (struct v4l2_fract){1, 32};
+            fract.numerator=1, fract.denominator=32;
             break;
         case 64:
-            fract = (struct v4l2_fract){1, 64};
+            fract.numerator=1, fract.denominator=64;
             break;
         default:
             fprintf(stderr, "Warning: FPS unrecognized, defaulting to 4Hz\n");
             // fall through
         case 4:
-            fract = (struct v4l2_fract){1, 4};
+            fract.numerator=1, fract.denominator=4;
             break;
     }
     parm.parm.capture.timeperframe = fract;
