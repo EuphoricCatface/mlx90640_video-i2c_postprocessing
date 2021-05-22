@@ -177,8 +177,9 @@ int main(int argc, char **argv) {
             for (int row = 0; row < 24; row++) {
                 for (int col = 0; col < 32; col++) {
                     double result = a * ((mlx.To_())[row * 32 + col] - b);
-                    if (result > 65535.5 + DBL_EPSILON) {
-                        printf("MAPPING ERROR: result is bigger than 65535.5!\n");
+                    if (result >= 65536) {  // somehow conversion yielded values bigger than 65535 + DBL_EPSILON, but by miniscule value
+                                            // Int conversion will always round down.
+                        printf("WARNING: mapping result too big\n");
                         printf("min: %lf, max: %lf, To: %lf, Result: %lf\n",
                             pixels[mlx90640::MIN_T].T,
                             pixels[mlx90640::MAX_T].T,
@@ -186,8 +187,8 @@ int main(int argc, char **argv) {
                             result);
                         result = 65535;
                     }
-                    if (result < -0.5) {
-                        printf("MAPPING ERROR: result is smaller than -0.5!\n");
+                    if (result < 0) {
+                        printf("WARNING: mapping result negative\n");
                         printf("min: %lf, max: %lf, To: %lf, Result: %lf\n",
                             pixels[mlx90640::MIN_T].T,
                             pixels[mlx90640::MAX_T].T,
