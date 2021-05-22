@@ -3,7 +3,8 @@
 #include <gst/app/gstappsrc.h>
 
 #include <string.h>
-#include <cstdint>
+
+#include "push_data.hpp"
 
 #define CHUNK_SIZE (32 * 24 * 2)   /* Amount of bytes we are sending in each buffer */
 
@@ -92,7 +93,7 @@ static void error_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
     g_free (debug_info);
 }
 
-int init(void) {
+int gst_init(void) {
     _data = new CustomData;
     CustomData &data = *_data;
     GstVideoInfo info;
@@ -162,13 +163,13 @@ int init(void) {
     return 0;
 }
 
-void running(void) {
+void gst_start_running(void) {
     CustomData &data = *_data;
     /* Start playing the pipeline */
     gst_element_set_state (data.pipeline, GST_STATE_PLAYING);
 }
 
-void cleanup(void) {
+void gst_cleanup(void) {
     CustomData &data = *_data;
     /* Free resources */
     gst_element_set_state (data.pipeline, GST_STATE_NULL);
