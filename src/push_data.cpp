@@ -4,7 +4,6 @@
 #include <string.h>
 
 #define CHUNK_SIZE 1024   /* Amount of bytes we are sending in each buffer */
-#define SAMPLE_RATE 44100 /* Samples per second we are sending */
 
 /* Structure to contain all our information, so we can pass it to callbacks */
 typedef struct _CustomData {
@@ -16,7 +15,6 @@ typedef struct _CustomData {
     GstElement *gl_colorconvert, *gl_colorscale, *gl_effects_heat;
     GstElement *gl_download, *video_sink;
 
-    guint64 num_samples;   /* Number of samples generated so far (for timestamp generation) */
     gfloat a, b, c, d;     /* For waveform generation */
 } CustomData;
 
@@ -39,8 +37,7 @@ static gboolean push_data (CustomData *data) {
     buffer = gst_buffer_new_and_alloc (CHUNK_SIZE);
 
     /* Set its timestamp and duration */
-    GST_BUFFER_TIMESTAMP (buffer) = gst_util_uint64_scale (data->num_samples, GST_SECOND, SAMPLE_RATE);
-    GST_BUFFER_DURATION (buffer) = gst_util_uint64_scale (num_samples, GST_SECOND, SAMPLE_RATE);
+    //TODO
 
     /* Generate some psychodelic waveforms */
     gst_buffer_map (buffer, &map, GST_MAP_WRITE);
@@ -54,7 +51,6 @@ static gboolean push_data (CustomData *data) {
         raw[i] = (gint16)(500 * data->a);
     }
     gst_buffer_unmap (buffer, &map);
-    data->num_samples += num_samples;
 
     /* Push the buffer into the appsrc */
     g_signal_emit_by_name (data->app_source, "push-buffer", buffer, &ret);
