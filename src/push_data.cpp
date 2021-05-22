@@ -18,10 +18,6 @@ typedef struct _CustomData {
 
     guint64 num_samples;   /* Number of samples generated so far (for timestamp generation) */
     gfloat a, b, c, d;     /* For waveform generation */
-
-    guint sourceid;        /* To control the GSource */
-
-    GMainLoop *main_loop;  /* GLib's Main Loop */
 } CustomData;
 
 /* This method is called by the idle GSource in the mainloop, to feed CHUNK_SIZE bytes into appsrc.
@@ -75,20 +71,13 @@ static gboolean push_data (CustomData *data) {
 /* This signal callback triggers when appsrc needs data. Here, we add an idle handler
  * to the mainloop to start pushing data into the appsrc */
 static void start_feed (GstElement *source, guint size, CustomData *data) {
-    if (data->sourceid == 0) {
-        g_print ("Start feeding\n");
-        data->sourceid = g_idle_add ((GSourceFunc) push_data, data);
-    }
+    g_print ("Start feeding (not)\n");
 }
 
 /* This callback triggers when appsrc has enough data and we can stop sending.
  * We remove the idle handler from the mainloop */
 static void stop_feed (GstElement *source, CustomData *data) {
-    if (data->sourceid != 0) {
-        g_print ("Stop feeding\n");
-        g_source_remove (data->sourceid);
-        data->sourceid = 0;
-    }
+    g_print ("Stop feeding (not)\n");
 }
 
 /* The appsink has received a buffer */
@@ -118,8 +107,6 @@ static void error_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
     g_printerr ("Debugging information: %s\n", debug_info ? debug_info : "none");
     g_clear_error (&err);
     g_free (debug_info);
-
-    g_main_loop_quit (data->main_loop);
 }
 
 int main(int argc, char *argv[]) {
@@ -189,10 +176,6 @@ int main(int argc, char *argv[]) {
 
     /* Start playing the pipeline */
     gst_element_set_state (data.pipeline, GST_STATE_PLAYING);
-
-    /* Create a GLib Main Loop and set it to run */
-    data.main_loop = g_main_loop_new (NULL, FALSE);
-    g_main_loop_run (data.main_loop);
 
     /* Free resources */
     gst_element_set_state (data.pipeline, GST_STATE_NULL);
