@@ -1,5 +1,6 @@
 #include <gst/gst.h>
 #include <gst/video/video.h>
+#include <gst/app/gstappsrc.h>
 #include <string.h>
 
 #define CHUNK_SIZE 1024   /* Amount of bytes we are sending in each buffer */
@@ -158,7 +159,11 @@ int main(int argc, char *argv[]) {
     /* Configure appsrc */
     gst_video_info_set_format (&info, GST_VIDEO_FORMAT_GRAY16_LE, 32, 24);
     video_caps = gst_video_info_to_caps (&info);
-    g_object_set (data.app_source, "caps", video_caps, "format", GST_FORMAT_TIME, NULL);
+    g_object_set (data.app_source,
+                    "caps", video_caps,
+                    "format", GST_FORMAT_TIME,
+                    "stream-type", GST_APP_STREAM_TYPE_STREAM,
+                    NULL);
     g_signal_connect (data.app_source, "need-data", G_CALLBACK (start_feed), &data);
     g_signal_connect (data.app_source, "enough-data", G_CALLBACK (stop_feed), &data);
 
