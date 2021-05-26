@@ -3,8 +3,8 @@
 
 #include <cstdint>
 
-uint16_t* get_userp(void);
-bool arm_buffer(void);
+uint8_t * gst_get_userp(void);
+bool gst_arm_buffer();
 
 int gst_init(void);
 void gst_start_running(void);

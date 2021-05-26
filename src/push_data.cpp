@@ -26,7 +26,7 @@ typedef struct _CustomData {
 
 static CustomData * _data = NULL;
 
-uint16_t* get_userp(void) {
+uint8_t * gst_get_userp(void) {
     if (_data == NULL) return NULL;
 
     /* Create a new empty buffer */
@@ -40,7 +40,7 @@ uint16_t* get_userp(void) {
     return (uint16_t *)(_data->map->data);
 }
 
-bool arm_buffer(void) {
+bool gst_arm_buffer() {
     GstFlowReturn ret;
 
     if (_data == NULL || _data->buffer == NULL || _data->map == NULL)
