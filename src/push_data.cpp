@@ -19,7 +19,7 @@ typedef struct _CustomData {
     GstElement *gl_download, *video_sink;
 
     GstBuffer *buffer;
-    GstMapInfo *map;
+    GstMapInfo map;
 
     bool feed_running;
 } CustomData;
@@ -30,20 +30,19 @@ uint8_t * gst_get_userp(void) {
     if (_data == NULL) return NULL;
 
     /* Create a new empty buffer */
-    if (_data->buffer == NULL)
+    if (_data->buffer == NULL) {
         _data->buffer = gst_buffer_new_and_alloc (CHUNK_SIZE);
+        gst_buffer_map (_data->buffer, &(_data->map), GST_MAP_WRITE);
+    }
 
     /* Return the data portion pointer of the buffer */
-    if (_data->map == NULL)
-        gst_buffer_map (_data->buffer, _data->map, GST_MAP_WRITE);
-
-    return (uint16_t *)(_data->map->data);
+    return _data->map.data;
 }
 
 bool gst_arm_buffer() {
     GstFlowReturn ret;
 
-    if (_data == NULL || _data->buffer == NULL || _data->map == NULL)
+    if (_data == NULL || _data->buffer == NULL)
         return false;
     /* Set the buffer's timestamp and duration */
     //TODO
@@ -53,14 +52,11 @@ bool gst_arm_buffer() {
     if (!_data->feed_running)
         return TRUE; // eeeeeehhhh... we're *not* experiencing a problem, right?
 
-    gst_buffer_unmap (_data->buffer, _data->map);
-    _data->map = NULL;
+    gst_buffer_unmap (_data->buffer, &(_data->map));
 
     /* Push the buffer into the appsrc */
     ret = gst_app_src_push_buffer((GstAppSrc *)(_data->app_source), _data->buffer);
 
-    /* Free the buffer now that we are done with it */
-    gst_buffer_unref (_data->buffer);
     _data->buffer = NULL;
 
     if (ret != GST_FLOW_OK) {
@@ -106,7 +102,6 @@ int gst_init(void) {
     /* Initialize cumstom data structure */
     memset (&data, 0, sizeof (data));
     data.buffer = NULL;
-    data.map = NULL;
     data.feed_running = false;
 
     /* Initialize GStreamer */
