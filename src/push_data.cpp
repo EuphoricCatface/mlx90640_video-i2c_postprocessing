@@ -10,9 +10,9 @@
 
 /* Structure to contain all our information, so we can pass it to callbacks */
 typedef struct _CustomData {
-    GstElement *pipeline, *app_source, *video_scale, *caps_filter, *gl_upload;
-    GstElement *gl_colorconvert, *gl_effects_heat;
-    GstElement *gl_imagesink;
+    GstElement *pipeline, *app_source, *video_scale, *caps_filter;
+    GstElement *gl_upload, *gl_colorconvert, *gl_effects_heat;
+    GstElement *text_overlay, *gl_imagesink;
 
     GstBuffer *buffer;
     GstMapInfo map;
@@ -113,17 +113,20 @@ int gst_init_(int scale_type, int scale_ratio) {
     data.app_source = gst_element_factory_make ("appsrc", "mlx_source");
     data.video_scale = gst_element_factory_make("videoscale", "video_scale");
     data.caps_filter = gst_element_factory_make("capsfilter", "caps_filter");
+
     data.gl_upload = gst_element_factory_make("glupload", "gl_upload");
     data.gl_colorconvert = gst_element_factory_make("glcolorconvert", "gl_colorconvert");
     data.gl_effects_heat = gst_element_factory_make("gleffects_heat", "gl_effects_heat");
-    data.gl_imagesink = gst_element_factory_make ("glimagesink", "gl_imagesink");
+
+    data.text_overlay = gst_element_factory_make("textoverlay", "text_overlay");
+    data.gl_imagesink = gst_element_factory_make("glimagesink", "gl_imagesink");
 
     /* Create the empty pipeline */
     data.pipeline = gst_pipeline_new ("test-pipeline");
 
-    if (!data.pipeline || !data.app_source || !data.video_scale || !data.caps_filter || !data.gl_upload ||
-            !data.gl_colorconvert || !data.gl_effects_heat ||
-        !data.gl_imagesink) {
+    if (!data.pipeline || !data.app_source || !data.video_scale || !data.caps_filter ||
+            !data.gl_upload || !data.gl_colorconvert || !data.gl_effects_heat ||
+            !data.text_overlay || !data.gl_imagesink) {
         g_printerr ("Not all elements could be created.\n");
         return -1;
     }
@@ -160,15 +163,23 @@ int gst_init_(int scale_type, int scale_ratio) {
             "caps", caps,
             NULL);
 
+    /* Configure textoverlay */
+    g_object_set (data.text_overlay,
+            "text", "test1",
+            "font-desc", "20",
+            //"valignment", G_TYPE_INT, "2",
+            //"halignment", G_TYPE_INT, "2",
+            NULL);
+
     /* Link all elements because they have "Always" pads */
     gst_bin_add_many (GST_BIN (data.pipeline),
-            data.app_source, data.video_scale, data.caps_filter, data.gl_upload,
-            data.gl_colorconvert, data.gl_effects_heat,
-            data.gl_imagesink, NULL);
+            data.app_source, data.video_scale, data.caps_filter,
+            data.gl_upload, data.gl_colorconvert, data.gl_effects_heat,
+            data.text_overlay, data.gl_imagesink, NULL);
     if (gst_element_link_many (
-            data.app_source, data.video_scale, data.caps_filter, data.gl_upload,
-            data.gl_colorconvert, data.gl_effects_heat,
-            data.gl_imagesink, NULL) != TRUE) {
+            data.app_source, data.video_scale, data.caps_filter,
+            data.gl_upload, data.gl_colorconvert, data.gl_effects_heat,
+            data.text_overlay, data.gl_imagesink, NULL) != TRUE) {
         g_printerr ("Elements could not be linked.\n");
         gst_object_unref (data.pipeline);
         return -1;
