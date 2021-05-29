@@ -68,12 +68,16 @@ bool gst_arm_buffer() {
 
 /* This signal callback triggers when appsrc needs data. */
 static void start_feed (GstElement *source, guint size, CustomData *data) {
+    if (data->feed_running)
+        return;
     g_print ("Start feeding\n");
     data->feed_running = true;
 }
 
 /* This callback triggers when appsrc has enough data and we can stop sending. */
 static void stop_feed (GstElement *source, CustomData *data) {
+    if (!data->feed_running)
+        return;
     g_print ("Stop feeding\n");
     data->feed_running = false;
 }
