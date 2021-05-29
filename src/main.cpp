@@ -10,6 +10,7 @@
 #include "memory_mlx90640.hpp"
 #include "mlx90640.hpp"
 #include "dev_handler.hpp"
+#include "push_data.hpp"
 
 static const char short_options[] = "d:n:hmrf:S:R:CX";
 
@@ -150,9 +151,16 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
+    if (gst_init_() != 0) {
+        printf("Gstreamer initialization error\n");
+        exit(EXIT_FAILURE);
+    }
+
     mlx.init_frame_file(device);
+    gst_start_running();
 
     uint16_t To_int[0x300];
+    uint8_t * dest;
     const mlx90640::pixel *pixels;
     FILE* save_LE16_frm;
     FILE* save_pixel_raw;
@@ -162,8 +170,16 @@ int main(int argc, char **argv) {
         save_pixel_raw = fopen(save_raw_path, "wb");
 
     while (1) {
-        if (!mlx.process_frame_file())
+        if (!mlx.process_frame_file()) {
+            printf("Stopping due to file read\n");
             break;
+        }
+
+        dest = gst_get_userp();
+        if (dest == NULL) {
+            printf("Stopping due to gstreamer frame init\n");
+            break;
+        }
 
         mlx.process_frame();
         mlx.process_pixel();
@@ -204,6 +220,12 @@ int main(int argc, char **argv) {
             fwrite(mlx.Pix_Raw_(), sizeof(uint16_t), device->is_extended() ? 0x360 : 0x340, save_pixel_raw);
 
 
+        memcpy(dest, To_int, 0x600);
+
+        if (!gst_arm_buffer()) {
+            printf("Stopping due to Gstreamer frame processing\n");
+            break;
+        }
     }
 
     printf("closing\n");
@@ -213,6 +235,8 @@ int main(int argc, char **argv) {
     if (save_raw) {
         fclose(save_pixel_raw);
     }
+
+    gst_cleanup();
 
     delete device;
     return 0;
