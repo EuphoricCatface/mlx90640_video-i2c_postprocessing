@@ -41,10 +41,9 @@ bool gst_arm_buffer() {
     if (_data == NULL || _data->buffer == NULL)
         return false;
 
-    /* Set the buffer's timestamp and duration */
-    //FIXME
-    GST_BUFFER_TIMESTAMP (_data->buffer) = GST_CLOCK_TIME_NONE;
-    GST_BUFFER_DURATION (_data->buffer) = GST_CLOCK_TIME_NONE;
+    /* Set the buffer's timestamp and duration - NOT */
+    // http://gstreamer-devel.966125.n4.nabble.com/How-do-you-construct-the-timestamps-duration-for-video-audio-appsrc-when-captured-by-DeckLink-tp4675678p4675748.html
+    // You set do-timestamp to true.
 
     /* TODO: Ideally, we can start & stop the camera,
      * but let's just discard *ALL* the data for the time being */
@@ -130,6 +129,7 @@ int gst_init_(int scale_type, int scale_ratio) {
     }
 
     /* Configure appsrc */
+    /* http://gstreamer-devel.966125.n4.nabble.com/How-do-you-construct-the-timestamps-duration-for-video-audio-appsrc-when-captured-by-DeckLink-tp4675678p4675748.html */
     gst_video_info_init(&info);
     gst_video_info_set_format (&info, GST_VIDEO_FORMAT_GRAY16_LE, 32, 24);
     video_caps = gst_video_info_to_caps (&info);
@@ -137,6 +137,9 @@ int gst_init_(int scale_type, int scale_ratio) {
                     "caps", video_caps,
                     "format", GST_FORMAT_TIME,
                     "stream-type", GST_APP_STREAM_TYPE_STREAM,
+                    "do-timestamp", true,
+                    //"min-latency", GST_SECOND / 4/* fps */,
+                    "is-live", true,
                     NULL);
     g_signal_connect (data.app_source, "need-data", G_CALLBACK (start_feed), &data);
     g_signal_connect (data.app_source, "enough-data", G_CALLBACK (stop_feed), &data);
