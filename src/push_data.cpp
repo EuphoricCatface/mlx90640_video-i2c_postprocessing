@@ -92,7 +92,7 @@ static void error_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
     g_free (debug_info);
 }
 
-int gst_init(void) {
+int gst_init_(void) {
     _data = new CustomData;
     CustomData &data = *_data;
     GstVideoInfo info;

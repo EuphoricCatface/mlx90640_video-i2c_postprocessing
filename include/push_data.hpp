@@ -6,7 +6,7 @@
 uint8_t * gst_get_userp(void);
 bool gst_arm_buffer();
 
-int gst_init(void);
+int gst_init_(void);
 void gst_start_running(void);
 void gst_cleanup(void);
 
