@@ -192,7 +192,7 @@ bool mlx90640::init_ee(const char * path, bool ignore_ee_check) {
     for (int row = 0; row < 24; row++) {
         for (int col = 0; col < 32; col++) {
             int K_Ta_int = K_Ta_2x2[row%2][col%2] + (K_Ta_PIX[row * 32 + col] << K_Ta_scale2);
-            K_Ta[row * 24 + col]
+            K_Ta[row * 32 + col]
                 = (double)(K_Ta_int)
                   / (double)(1 << K_Ta_scale1);
         }
