@@ -168,42 +168,41 @@ int main(int argc, char **argv) {
         mlx.process_frame();
         mlx.process_pixel();
 
-        if (save || save_raw) {
-            pixels = mlx.pix_notable();
-            // mapping: a(x-b) = range * (x-min) / (max - min)
-            double b = pixels[mlx90640::MIN_T].T;
-            double a = 65535.0 / (pixels[mlx90640::MAX_T].T - pixels[mlx90640::MIN_T].T);
+        pixels = mlx.pix_notable();
+        // mapping: a(x-b) = range * (x-min) / (max - min)
+        double b = pixels[mlx90640::MIN_T].T;
+        double a = 65535.0 / (pixels[mlx90640::MAX_T].T - pixels[mlx90640::MIN_T].T);
 
-            for (int row = 0; row < 24; row++) {
-                for (int col = 0; col < 32; col++) {
-                    double result = a * ((mlx.To_())[row * 32 + col] - b);
-                    if (result >= 65536) {  // somehow conversion yielded values bigger than 65535 + DBL_EPSILON, but by miniscule value
-                                            // Int conversion will always round down.
-                        printf("WARNING: mapping result too big\n");
-                        printf("min: %lf, max: %lf, To: %lf, Result: %lf\n",
-                            pixels[mlx90640::MIN_T].T,
-                            pixels[mlx90640::MAX_T].T,
-                            (mlx.To_())[row * 32 + col],
-                            result);
-                        result = 65535;
-                    }
-                    if (result < 0) {
-                        printf("WARNING: mapping result negative\n");
-                        printf("min: %lf, max: %lf, To: %lf, Result: %lf\n",
-                            pixels[mlx90640::MIN_T].T,
-                            pixels[mlx90640::MAX_T].T,
-                            (mlx.To_())[row * 32 + col],
-                            result);
-                        result = 0;
-                    }
-                    To_int[row * 32 + col] = result;
+        for (int row = 0; row < 24; row++) {
+            for (int col = 0; col < 32; col++) {
+                double result = a * ((mlx.To_())[row * 32 + col] - b);
+                if (result >= 65536) {  // somehow conversion yielded values bigger than 65535 + DBL_EPSILON, but by miniscule value
+                                        // Int conversion will always round down.
+                    printf("WARNING: mapping result too big\n");
+                    printf("min: %lf, max: %lf, To: %lf, Result: %lf\n",
+                        pixels[mlx90640::MIN_T].T,
+                        pixels[mlx90640::MAX_T].T,
+                        (mlx.To_())[row * 32 + col],
+                        result);
+                    result = 65535;
                 }
+                if (result < 0) {
+                    printf("WARNING: mapping result negative\n");
+                    printf("min: %lf, max: %lf, To: %lf, Result: %lf\n",
+                        pixels[mlx90640::MIN_T].T,
+                        pixels[mlx90640::MAX_T].T,
+                        (mlx.To_())[row * 32 + col],
+                        result);
+                    result = 0;
+                }
+                To_int[row * 32 + col] = result;
             }
-            if (save)
-                fwrite(To_int, sizeof(uint16_t), 0x300, save_LE16_frm);
-            if (save_raw)
-                fwrite(mlx.Pix_Raw_(), sizeof(uint16_t), device->is_extended() ? 0x360 : 0x340, save_pixel_raw);
         }
+        if (save)
+            fwrite(To_int, sizeof(uint16_t), 0x300, save_LE16_frm);
+        if (save_raw)
+            fwrite(mlx.Pix_Raw_(), sizeof(uint16_t), device->is_extended() ? 0x360 : 0x340, save_pixel_raw);
+
 
     }
 
