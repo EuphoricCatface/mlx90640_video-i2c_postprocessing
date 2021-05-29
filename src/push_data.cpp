@@ -46,11 +46,14 @@ bool gst_arm_buffer() {
 
     if (_data == NULL || _data->buffer == NULL)
         return false;
+
     /* Set the buffer's timestamp and duration */
-    //TODO
+    //FIXME
+    GST_BUFFER_TIMESTAMP (_data->buffer) = GST_CLOCK_TIME_NONE;
+    GST_BUFFER_DURATION (_data->buffer) = GST_CLOCK_TIME_NONE;
 
     /* TODO: Ideally, we can start & stop the camera,
-     * but let's just discard the data for the time being */
+     * but let's just discard *ALL* the data for the time being */
     if (!_data->feed_running)
         return TRUE; // eeeeeehhhh... we're *not* experiencing a problem, right?
 
@@ -135,6 +138,7 @@ int gst_init_(void) {
     }
 
     /* Configure appsrc */
+    gst_video_info_init(&info);
     gst_video_info_set_format (&info, GST_VIDEO_FORMAT_GRAY16_LE, 32, 24);
     video_caps = gst_video_info_to_caps (&info);
     g_object_set (data.app_source,
