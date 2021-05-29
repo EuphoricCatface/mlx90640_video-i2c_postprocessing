@@ -223,11 +223,11 @@ bool dev_handler::read_raw(void * dest) {
         case -1:
             break;
         case 0:
-            usleep(2000);
+            usleep(2000000);
             break;
         default:
             if (fps > 0)
-                usleep(1000 / fps);
+                usleep(1000000 / fps);
             else {
                 fprintf(stderr, "FPS is negative\n");
                 exit(EXIT_FAILURE);
