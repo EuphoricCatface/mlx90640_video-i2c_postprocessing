@@ -10,15 +10,9 @@
 
 /* Structure to contain all our information, so we can pass it to callbacks */
 typedef struct _CustomData {
-    // gst-launch-1.0 filesrc location=~/extended_test
-    //                  ! rawvideoparse format=gray16-le width=32 height=24 framerate=4/1
-    //                  ! glupload ! glcolorconvert ! glcolorscale ! gleffects_heat
-    //                  ! gldownload ! video/x-raw, width=320, height=240 ! autovideosink
-    GstElement *pipeline, *app_source, *video_scale, *caps_filter, /**video_queue,*/ *gl_upload;
-    GstElement *gl_colorconvert,/* *gl_colorscale,*/ *gl_effects_heat;
-    //GstElement *gl_download, *video_convert, *video_sink;
-    //GstElement *video_convert, *video_scale, *video_sink;
-    GstElement *video_sink;
+    GstElement *pipeline, *app_source, *video_scale, *caps_filter, *gl_upload;
+    GstElement *gl_colorconvert, *gl_effects_heat;
+    GstElement *gl_imagesink;
 
     GstBuffer *buffer;
     GstMapInfo map;
@@ -116,23 +110,17 @@ int gst_init_(void) {
     data.app_source = gst_element_factory_make ("appsrc", "mlx_source");
     data.video_scale = gst_element_factory_make("videoscale", "video_scale");
     data.caps_filter = gst_element_factory_make("capsfilter", "caps_filter");
-    //data.video_queue = gst_element_factory_make ("queue", "video_queue");
     data.gl_upload = gst_element_factory_make("glupload", "gl_upload");
     data.gl_colorconvert = gst_element_factory_make("glcolorconvert", "gl_colorconvert");
-    //data.gl_colorscale = gst_element_factory_make("glcolorscale", "gl_colorscale");
     data.gl_effects_heat = gst_element_factory_make("gleffects_heat", "gl_effects_heat");
-    //data.gl_download = gst_element_factory_make("gldownload", "gl_download");
-    //data.video_convert = gst_element_factory_make("videoconvert", "video_convert");
-    data.video_sink = gst_element_factory_make ("glimagesink", "video_sink");
+    data.gl_imagesink = gst_element_factory_make ("glimagesink", "gl_imagesink");
 
     /* Create the empty pipeline */
     data.pipeline = gst_pipeline_new ("test-pipeline");
 
-    if (!data.pipeline || !data.app_source ||/**/ !data.video_scale || !data.caps_filter || /*!data.video_queue ||*/ !data.gl_upload ||
-            !data.gl_colorconvert || /*!data.gl_colorscale ||*/ !data.gl_effects_heat ||
-            //!data.gl_download || !data.video_convert || !data.video_sink) {
-            // !data.video_convert || !data.video_scale || !data.video_sink) {
-        !data.video_sink) {
+    if (!data.pipeline || !data.app_source || !data.video_scale || !data.caps_filter || !data.gl_upload ||
+            !data.gl_colorconvert || !data.gl_effects_heat ||
+        !data.gl_imagesink) {
         g_printerr ("Not all elements could be created.\n");
         return -1;
     }
@@ -171,17 +159,13 @@ int gst_init_(void) {
 
     /* Link all elements because they have "Always" pads */
     gst_bin_add_many (GST_BIN (data.pipeline),
-            data.app_source, data.video_scale, data.caps_filter, /*data.video_queue,*/ data.gl_upload,
-            data.gl_colorconvert, /*data.gl_colorscale,*/ data.gl_effects_heat,
-            //data.gl_download, data.video_convert, data.video_sink, NULL);
-            //data.video_convert, data.video_scale, data.video_sink, NULL);
-            data.video_sink, NULL);
+            data.app_source, data.video_scale, data.caps_filter, data.gl_upload,
+            data.gl_colorconvert, data.gl_effects_heat,
+            data.gl_imagesink, NULL);
     if (gst_element_link_many (
-            data.app_source, /*data.video_queue,*/ data.video_scale, data.caps_filter, data.gl_upload,
-            data.gl_colorconvert, /*data.gl_colorscale,*/ data.gl_effects_heat,
-            //data.gl_download, data.video_convert, data.video_sink, NULL) != TRUE) {
-            //data.video_convert, data.video_scale, data.video_sink, NULL) != TRUE) {
-            data.video_sink, NULL) != TRUE) {
+            data.app_source, data.video_scale, data.caps_filter, data.gl_upload,
+            data.gl_colorconvert, data.gl_effects_heat,
+            data.gl_imagesink, NULL) != TRUE) {
         g_printerr ("Elements could not be linked.\n");
         gst_object_unref (data.pipeline);
         return -1;
