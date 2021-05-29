@@ -12,7 +12,7 @@
 #include "dev_handler.hpp"
 #include "push_data.hpp"
 
-static const char short_options[] = "d:n:hmrf:S:R:CX";
+static const char short_options[] = "d:n:hmrf:S:R:CXt:x:";
 
 static const struct option
 long_options[] = {
@@ -26,6 +26,8 @@ long_options[] = {
     { "save-raw",   required_argument,  NULL, 'R' },
     { "ignore-EE-check",  no_argument,  NULL, 'C' },
     { "extended-format",  no_argument,  NULL, 'X' },
+    { "interp-type", required_argument, NULL, 't' },
+    { "interp-ratio", required_argument, NULL, 'x' },
     { 0, 0, 0, 0 }
 };
 
@@ -48,6 +50,10 @@ static void usage(FILE *fp, int, char**argv)
             "-R | --save-raw PATH       (Debug) Path to save raw frame data feed\n"
             "-C | --ignore-EE-check     Skip NVRAM validity check\n"
             "-X | --extended-format     (Raw file read only) Treat the file as 27 lines per frame\n"
+            "-t | --interp-type         Interpolation type of firsthand scaling, in int [default: 7]\n"
+            "               Refer to Gstreamer videoscale plugin documentation\n"
+            "-x | --interp-ratio        Scale factor of firsthand scaling [default: 7]\n"
+            "               The width and height will be multiplied with this factor\n"
             "",
             argv[0]);
 }
@@ -70,6 +76,9 @@ int main(int argc, char **argv) {
     int io_method = dev_handler::IO_METHOD_MMAP;
     bool ignore_ee_check = false;
     bool extended_format = false;
+
+    int interp_type = 7;
+    int interp_ratio = 7;
 
     for (;;) {
         int idx;
@@ -129,6 +138,14 @@ int main(int argc, char **argv) {
             extended_format = true;
             break;
 
+        case 't':
+            interp_type = std::stoi(optarg);
+            break;
+
+        case 'x':
+            interp_ratio = std::stoi(optarg);
+            break;
+
         default:
             fprintf(stderr, "Unrecognized option: %c\n", c);
             usage(stdout, argc, argv);
@@ -151,7 +168,7 @@ int main(int argc, char **argv) {
         exit(EXIT_FAILURE);
     }
 
-    if (gst_init_() != 0) {
+    if (gst_init_(interp_type, interp_ratio) != 0) {
         printf("Gstreamer initialization error\n");
         exit(EXIT_FAILURE);
     }

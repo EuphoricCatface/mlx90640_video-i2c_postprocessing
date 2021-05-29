@@ -95,7 +95,7 @@ static void error_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
     g_free (debug_info);
 }
 
-int gst_init_(void) {
+int gst_init_(int scale_type, int scale_ratio) {
     _data = new CustomData;
     CustomData &data = *_data;
     GstVideoInfo info;
@@ -143,13 +143,13 @@ int gst_init_(void) {
 
     /* Configure videoscale */
     g_object_set (data.video_scale,
-            "method", 7,
+            "method", scale_type,
             //"sharpen", 1.0,
             NULL);
     GstCaps * caps = gst_caps_new_simple (
             "video/x-raw",
-            "width", G_TYPE_INT, 64,
-            "height", G_TYPE_INT, 48,
+            "width", G_TYPE_INT, 32*scale_ratio,
+            "height", G_TYPE_INT, 24*scale_ratio,
             NULL);
     g_object_set (data.caps_filter,
             "caps", caps,
