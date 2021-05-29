@@ -149,6 +149,8 @@ int gst_init_(int scale_type, int scale_ratio) {
             "method", scale_type,
             //"sharpen", 1.0,
             NULL);
+
+    /* Configure capsfilter */
     GstCaps * caps = gst_caps_new_simple (
             "video/x-raw",
             "width", G_TYPE_INT, 32*scale_ratio,
@@ -157,12 +159,6 @@ int gst_init_(int scale_type, int scale_ratio) {
     g_object_set (data.caps_filter,
             "caps", caps,
             NULL);
-    /*
-    g_object_set (data.gl_colorscale,
-            "scale-x", 10,
-            "scale-y", 10,
-            NULL);
-    */
 
     /* Link all elements because they have "Always" pads */
     gst_bin_add_many (GST_BIN (data.pipeline),
