@@ -1,6 +1,8 @@
 #include <gst/gst.h>
 #include <gst/video/video.h>
 #include <gst/app/gstappsrc.h>
+#include <gst/controller/gstinterpolationcontrolsource.h>
+#include <gst/controller/gstdirectcontrolbinding.h>
 
 #include <string.h>
 
@@ -16,6 +18,8 @@ typedef struct _CustomData {
 
     GstBuffer *buffer;
     GstMapInfo map;
+
+    GstControlSource * csource;
 
     bool feed_running;
 } CustomData;
@@ -64,6 +68,13 @@ bool gst_arm_buffer() {
 
     return TRUE;
 }
+
+/*
+void gst_arm_pixeldata() {
+    GstTimedValueControlSource *tv_csource = (GstTimedValueControlSource *)(_data->csource);
+    gst_timed_value_control_source_set (tv_csource, 0, "test2");
+}
+*/
 
 /* This signal callback triggers when appsrc needs data. */
 static void start_feed (GstElement *source, guint size, CustomData *data) {
@@ -184,7 +195,18 @@ int gst_init_(int scale_type, int scale_ratio) {
         gst_object_unref (data.pipeline);
         return -1;
     }
-
+/*
+    // Dynamic parameters
+    // The subsystem cannot control string. Preserving this part to reuse later
+    //for temperature cursor
+    data.csource = gst_interpolation_control_source_new();
+    gst_object_add_control_binding(
+        GST_OBJECT_CAST(data.text_overlay),
+        gst_direct_control_binding_new_absolute(
+            GST_OBJECT_CAST(data.text_overlay), "text", data.csource
+        )
+    );
+*/
     /* Instruct the bus to emit signals for each received message, and connect to the interesting signals */
     bus = gst_element_get_bus (data.pipeline);
     gst_bus_add_signal_watch (bus);
