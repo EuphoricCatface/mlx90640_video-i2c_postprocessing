@@ -14,7 +14,7 @@
 typedef struct _CustomData {
     GstElement *pipeline, *app_source, *video_scale, *caps_filter;
     GstElement *gl_upload, *gl_colorconvert, *gl_effects_heat;
-    GstElement *text_overlay, *gl_imagesink;
+    GstElement *app_src_txt, *text_overlay, *gl_imagesink;
 
     GstBuffer *buffer;
     GstMapInfo map;
@@ -41,6 +41,7 @@ uint8_t * gst_get_userp(void) {
 
 bool gst_arm_buffer() {
     GstFlowReturn ret;
+    GstFlowReturn ret_txt;
 
     if (_data == NULL || _data->buffer == NULL)
         return false;
@@ -56,12 +57,23 @@ bool gst_arm_buffer() {
 
     gst_buffer_unmap (_data->buffer, &(_data->map));
 
+    /* Push the buffer into the app_src_txt */
+    GstBuffer * txtbuf = gst_buffer_new_allocate(NULL, 20, NULL);
+    // NOTE1: textoverlay seem to show * till the end even if the string is null-terminated
+    // NOTE2: Dynamic update on textoverlay seems to drop the frame severely over ssh
+    //        but it still seems okay when executed locally
+    GstMapInfo txtmap;
+
+    gst_buffer_map (txtbuf, &txtmap, GST_MAP_WRITE);
+    memcpy(txtmap.data, "test1\ntest2", 15);
+    gst_buffer_unmap (txtbuf, &txtmap);
+
     /* Push the buffer into the appsrc */
     ret = gst_app_src_push_buffer((GstAppSrc *)(_data->app_source), _data->buffer);
-
     _data->buffer = NULL;
+    ret_txt = gst_app_src_push_buffer((GstAppSrc *)(_data->app_src_txt), txtbuf);
 
-    if (ret != GST_FLOW_OK) {
+    if (ret != GST_FLOW_OK || ret_txt != GST_FLOW_OK) {
         /* We got some error, stop sending data */
         return FALSE;
     }
@@ -110,6 +122,7 @@ int gst_init_(int scale_type, int scale_ratio) {
     CustomData &data = *_data;
     GstVideoInfo info;
     GstCaps *video_caps;
+    GstCaps *text_caps;
     GstBus *bus;
 
     /* Initialize cumstom data structure */
@@ -129,6 +142,7 @@ int gst_init_(int scale_type, int scale_ratio) {
     data.gl_colorconvert = gst_element_factory_make("glcolorconvert", "gl_colorconvert");
     data.gl_effects_heat = gst_element_factory_make("gleffects_heat", "gl_effects_heat");
 
+    data.app_src_txt = gst_element_factory_make ("appsrc", "app_src_text");
     data.text_overlay = gst_element_factory_make("textoverlay", "text_overlay");
     data.gl_imagesink = gst_element_factory_make("glimagesink", "gl_imagesink");
 
@@ -137,7 +151,7 @@ int gst_init_(int scale_type, int scale_ratio) {
 
     if (!data.pipeline || !data.app_source || !data.video_scale || !data.caps_filter ||
             !data.gl_upload || !data.gl_colorconvert || !data.gl_effects_heat ||
-            !data.text_overlay || !data.gl_imagesink) {
+            !data.app_src_txt || !data.text_overlay || !data.gl_imagesink) {
         g_printerr ("Not all elements could be created.\n");
         return -1;
     }
@@ -174,23 +188,38 @@ int gst_init_(int scale_type, int scale_ratio) {
             "caps", caps,
             NULL);
 
+    /* Configure app_src_txt */
+    text_caps = gst_caps_new_simple("text/x-raw",
+                    "format", G_TYPE_STRING, "utf8",
+                    NULL);
+    g_object_set (data.app_src_txt,
+                    "caps", text_caps,
+                    "format", GST_FORMAT_TIME,
+                    "stream-type", GST_APP_STREAM_TYPE_STREAM,
+                    "do-timestamp", true,
+                    //"min-latency", GST_SECOND / 4/* fps */,
+                    "is-live", true,
+                    NULL);
+
     /* Configure textoverlay */
     g_object_set (data.text_overlay,
             "text", "test1",
-            "font-desc", "20",
-            //"valignment", G_TYPE_INT, "2",
-            //"halignment", G_TYPE_INT, "2",
+            "font-desc", "Sans, 20",
+            "valignment", 2,
+            "halignment", 2,
             NULL);
 
     /* Link all elements because they have "Always" pads */
     gst_bin_add_many (GST_BIN (data.pipeline),
             data.app_source, data.video_scale, data.caps_filter,
             data.gl_upload, data.gl_colorconvert, data.gl_effects_heat,
-            data.text_overlay, data.gl_imagesink, NULL);
+            data.app_src_txt, data.text_overlay, data.gl_imagesink, NULL);
     if (gst_element_link_many (
             data.app_source, data.video_scale, data.caps_filter,
             data.gl_upload, data.gl_colorconvert, data.gl_effects_heat,
-            data.text_overlay, data.gl_imagesink, NULL) != TRUE) {
+            data.text_overlay, data.gl_imagesink, NULL) != TRUE ||
+        gst_element_link(data.app_src_txt, data.text_overlay) != TRUE
+            ) {
         g_printerr ("Elements could not be linked.\n");
         gst_object_unref (data.pipeline);
         return -1;
