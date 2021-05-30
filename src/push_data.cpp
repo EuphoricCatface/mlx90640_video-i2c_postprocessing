@@ -67,7 +67,7 @@ bool gst_arm_buffer() {
 }
 
 /* This signal callback triggers when appsrc needs data. */
-static void start_feed (GstElement *source, guint size, CustomData *data) {
+static void start_feed (GstElement * /*source*/, guint /*size*/, CustomData *data) {
     if (data->feed_running)
         return;
     g_print ("Start feeding\n");
@@ -75,7 +75,7 @@ static void start_feed (GstElement *source, guint size, CustomData *data) {
 }
 
 /* This callback triggers when appsrc has enough data and we can stop sending. */
-static void stop_feed (GstElement *source, CustomData *data) {
+static void stop_feed (GstElement * /*source*/, CustomData *data) {
     if (!data->feed_running)
         return;
     g_print ("Stop feeding\n");
@@ -83,7 +83,7 @@ static void stop_feed (GstElement *source, CustomData *data) {
 }
 
 /* This function is called when an error message is posted on the bus */
-static void error_cb (GstBus *bus, GstMessage *msg, CustomData *data) {
+static void error_cb (GstBus * /*bus*/, GstMessage *msg, CustomData * /*data*/) {
     GError *err;
     gchar *debug_info;
 
