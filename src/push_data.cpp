@@ -11,7 +11,7 @@
 /* Structure to contain all our information, so we can pass it to callbacks */
 typedef struct _CustomData {
     GstElement *pipeline, *app_source, *video_scale, *caps_filter;
-    GstElement *gl_upload, *gl_colorconvert, *gl_effects_heat;
+    GstElement *gl_upload, *gl_colorconvert, *gl_effects_heat, *gl_overlay;
     GstElement *app_src_txt, *text_overlay, *gl_imagesink;
 
     GstBuffer *buffer;
@@ -136,6 +136,7 @@ int gst_init_(int scale_type, int scale_ratio) {
     data.gl_upload = gst_element_factory_make("glupload", "gl_upload");
     data.gl_colorconvert = gst_element_factory_make("glcolorconvert", "gl_colorconvert");
     data.gl_effects_heat = gst_element_factory_make("gleffects_heat", "gl_effects_heat");
+    data.gl_overlay = gst_element_factory_make("gloverlay", "gl_overlay");
 
     data.app_src_txt = gst_element_factory_make ("appsrc", "app_src_text");
     data.text_overlay = gst_element_factory_make("textoverlay", "text_overlay");
@@ -145,7 +146,7 @@ int gst_init_(int scale_type, int scale_ratio) {
     data.pipeline = gst_pipeline_new ("test-pipeline");
 
     if (!data.pipeline || !data.app_source || !data.video_scale || !data.caps_filter ||
-            !data.gl_upload || !data.gl_colorconvert || !data.gl_effects_heat ||
+            !data.gl_upload || !data.gl_colorconvert || !data.gl_effects_heat || !data.gl_overlay ||
             !data.app_src_txt || !data.text_overlay || !data.gl_imagesink) {
         g_printerr ("Not all elements could be created.\n");
         return -1;
@@ -183,6 +184,16 @@ int gst_init_(int scale_type, int scale_ratio) {
             "caps", caps,
             NULL);
 
+    /* Configure gloverlay */
+    //location=./18231_rgb.png overlay-width=16 overlay-height=16 relative-x=0.5 relative-y=0.5
+    g_object_set (data.gl_overlay,
+            "location", "18231_rgb.png",
+            "overlay-width", scale_ratio,
+            "overlay-height", scale_ratio,
+            "relative-x", 0.5,
+            "relative-y", 0.5,
+            NULL);
+
     /* Configure app_src_txt */
     text_caps = gst_caps_new_simple("text/x-raw",
                     "format", G_TYPE_STRING, "utf8",
@@ -207,11 +218,11 @@ int gst_init_(int scale_type, int scale_ratio) {
     /* Link all elements because they have "Always" pads */
     gst_bin_add_many (GST_BIN (data.pipeline),
             data.app_source, data.video_scale, data.caps_filter,
-            data.gl_upload, data.gl_colorconvert, data.gl_effects_heat,
+            data.gl_upload, data.gl_colorconvert, data.gl_effects_heat, data.gl_overlay,
             data.app_src_txt, data.text_overlay, data.gl_imagesink, NULL);
     if (gst_element_link_many (
             data.app_source, data.video_scale, data.caps_filter,
-            data.gl_upload, data.gl_colorconvert, data.gl_effects_heat,
+            data.gl_upload, data.gl_colorconvert, data.gl_effects_heat, data.gl_overlay,
             data.text_overlay, data.gl_imagesink, NULL) != TRUE ||
         gst_element_link(data.app_src_txt, data.text_overlay) != TRUE
             ) {
