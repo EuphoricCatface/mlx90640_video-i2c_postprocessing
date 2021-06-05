@@ -103,6 +103,7 @@ public:
         int y;
         double T;
     };
+    typedef pixel notable_pxls_t[3];
 
 private:
     double dV;
@@ -115,7 +116,7 @@ private:
     double pix[0x300];
     double To[0x300];
 
-    pixel pix_list[3];
+    notable_pxls_t pix_list;
 
 public:
     void process_frame(void);
@@ -123,7 +124,7 @@ public:
 
     const double * To_() { return To; }
     const uint16_t * Pix_Raw_() { return ram.word_; }
-    const pixel * pix_notable() { return pix_list; }
+    const notable_pxls_t * pix_notable() { return &pix_list; }
 
 };
 

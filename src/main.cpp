@@ -191,7 +191,7 @@ int main(int argc, char **argv) {
 
     uint16_t To_int[0x300];
     uint8_t * dest;
-    const mlx90640::pixel *pixels;
+    const mlx90640::notable_pxls_t * pixels = nullptr;
     FILE* save_LE16_frm;
     FILE* save_pixel_raw;
     if (save)
@@ -216,8 +216,8 @@ int main(int argc, char **argv) {
 
         pixels = mlx.pix_notable();
         // mapping: a(x-b) = range * (x-min) / (max - min)
-        double b = pixels[mlx90640::MIN_T].T;
-        double a = 65535.0 / (pixels[mlx90640::MAX_T].T - pixels[mlx90640::MIN_T].T);
+        double b = (*pixels)[mlx90640::MIN_T].T;
+        double a = 65535.0 / ((*pixels)[mlx90640::MAX_T].T - (*pixels)[mlx90640::MIN_T].T);
 
         for (int row = 0; row < 24; row++) {
             for (int col = 0; col < 32; col++) {
@@ -226,8 +226,8 @@ int main(int argc, char **argv) {
                                         // Int conversion will always round down.
                     printf("WARNING: mapping result too big\n");
                     printf("min: %lf, max: %lf, To: %lf, Result: %lf\n",
-                        pixels[mlx90640::MIN_T].T,
-                        pixels[mlx90640::MAX_T].T,
+                        (*pixels)[mlx90640::MIN_T].T,
+                        (*pixels)[mlx90640::MAX_T].T,
                         (mlx.To_())[row * 32 + col],
                         result);
                     result = 65535;
@@ -235,8 +235,8 @@ int main(int argc, char **argv) {
                 if (result < 0) {
                     printf("WARNING: mapping result negative\n");
                     printf("min: %lf, max: %lf, To: %lf, Result: %lf\n",
-                        pixels[mlx90640::MIN_T].T,
-                        pixels[mlx90640::MAX_T].T,
+                        (*pixels)[mlx90640::MIN_T].T,
+                        (*pixels)[mlx90640::MAX_T].T,
                         (mlx.To_())[row * 32 + col],
                         result);
                     result = 0;
