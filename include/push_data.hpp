@@ -4,7 +4,7 @@
 #include <cstdint>
 
 uint8_t * gst_get_userp(void);
-bool gst_arm_buffer();
+bool gst_arm_buffer(const char *);
 
 int gst_init_(int, int);
 void gst_start_running(void);

@@ -4,8 +4,6 @@
 #include <gst/controller/gstinterpolationcontrolsource.h>
 #include <gst/controller/gstdirectcontrolbinding.h>
 
-#include <string.h>
-
 #include "push_data.hpp"
 
 #define CHUNK_SIZE (32 * 24 * 2)   /* Amount of bytes we are sending in each buffer */
@@ -39,7 +37,7 @@ uint8_t * gst_get_userp(void) {
     return _data->map.data;
 }
 
-bool gst_arm_buffer() {
+bool gst_arm_buffer(const char * overlay_str) {
     GstFlowReturn ret;
     GstFlowReturn ret_txt;
 
@@ -58,15 +56,12 @@ bool gst_arm_buffer() {
     gst_buffer_unmap (_data->buffer, &(_data->map));
 
     /* Push the buffer into the app_src_txt */
-    GstBuffer * txtbuf = gst_buffer_new_allocate(NULL, 20, NULL);
-    // NOTE1: textoverlay seem to show * till the end even if the string is null-terminated
-    // NOTE2: Dynamic update on textoverlay seems to drop the frame severely over ssh
-    //        but it still seems okay when executed locally
-    GstMapInfo txtmap;
-
-    gst_buffer_map (txtbuf, &txtmap, GST_MAP_WRITE);
-    memcpy(txtmap.data, "test1\ntest2", 15);
-    gst_buffer_unmap (txtbuf, &txtmap);
+    GstBuffer * txtbuf;
+    txtbuf = gst_buffer_new_wrapped_bytes (
+        g_string_free_to_bytes (
+            g_string_new(overlay_str)
+        )
+    );
 
     /* Push the buffer into the appsrc */
     ret = gst_app_src_push_buffer((GstAppSrc *)(_data->app_source), _data->buffer);

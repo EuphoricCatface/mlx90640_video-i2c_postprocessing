@@ -93,6 +93,8 @@ int main(int argc, char **argv) {
     int interp_type = 7;
     int interp_ratio = 7;
 
+    char overlay_buf[64];
+
     for (;;) {
         int idx;
         int c;
@@ -252,7 +254,12 @@ int main(int argc, char **argv) {
 
         memcpy(dest, To_int, 0x600);
 
-        if (!gst_arm_buffer()) {
+        snprintf(overlay_buf, 64, "MAX: %.2lf\nMIN: %.2lf\nMID: %.2lf",
+            pixels[mlx90640::MAX_T].T,
+            pixels[mlx90640::MIN_T].T,
+            pixels[mlx90640::SCENE_CENTER].T);
+
+        if (!gst_arm_buffer(overlay_buf)) {
             printf("Stopping due to Gstreamer frame processing\n");
             break;
         }
