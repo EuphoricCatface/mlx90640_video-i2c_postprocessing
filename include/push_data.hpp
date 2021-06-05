@@ -2,9 +2,10 @@
 #define __PUSH_DATA_HPP__
 
 #include <cstdint>
+#include "mlx90640.hpp"
 
 uint8_t * gst_get_userp(void);
-bool gst_arm_buffer();
+bool gst_arm_buffer(const mlx90640::notable_pxls_t * const pix_list);
 
 int gst_init_(int, int);
 void gst_start_running(void);
