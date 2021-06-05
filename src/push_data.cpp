@@ -4,6 +4,8 @@
 #include <gst/controller/gstinterpolationcontrolsource.h>
 #include <gst/controller/gstdirectcontrolbinding.h>
 
+#include <cstdio>
+
 #include "push_data.hpp"
 
 #define CHUNK_SIZE (32 * 24 * 2)   /* Amount of bytes we are sending in each buffer */
@@ -37,9 +39,10 @@ uint8_t * gst_get_userp(void) {
     return _data->map.data;
 }
 
-bool gst_arm_buffer(const char * overlay_str) {
+bool gst_arm_buffer(const mlx90640::pixel pix_list[3]) {
     GstFlowReturn ret;
     GstFlowReturn ret_txt;
+    char overlay_str[64];
 
     if (_data == NULL || _data->buffer == NULL)
         return false;
@@ -57,6 +60,12 @@ bool gst_arm_buffer(const char * overlay_str) {
 
     /* Push the buffer into the app_src_txt */
     GstBuffer * txtbuf;
+
+    snprintf(overlay_str, 64, "MAX: %.2lf\nMIN: %.2lf\nMID: %.2lf",
+        pix_list[mlx90640::MAX_T].T,
+        pix_list[mlx90640::MIN_T].T,
+        pix_list[mlx90640::SCENE_CENTER].T);
+
     txtbuf = gst_buffer_new_wrapped_bytes (
         g_string_free_to_bytes (
             g_string_new(overlay_str)
