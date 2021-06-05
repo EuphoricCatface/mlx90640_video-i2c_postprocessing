@@ -1,6 +1,7 @@
 #include <gst/gst.h>
 #include <gst/video/video.h>
 #include <gst/app/gstappsrc.h>
+#include <gst/controller/gsttriggercontrolsource.h>
 #include <gst/controller/gstinterpolationcontrolsource.h>
 #include <gst/controller/gstdirectcontrolbinding.h>
 
@@ -13,13 +14,18 @@
 /* Structure to contain all our information, so we can pass it to callbacks */
 typedef struct _CustomData {
     GstElement *pipeline, *app_source, *video_scale, *caps_filter;
-    GstElement *gl_upload, *gl_colorconvert, *gl_effects_heat, *gl_overlay;
+    GstElement *gl_upload, *gl_colorconvert, *gl_effects_heat;
+    GstElement *gl_overlay_center, *gl_overlay_hot, *gl_overlay_cold;
     GstElement *app_src_txt, *text_overlay, *gl_imagesink;
 
     GstBuffer *buffer;
     GstMapInfo map;
 
-    GstControlSource * csource;
+    GstControlSource * hot_x;
+    GstControlSource * hot_y;
+    GstControlSource * cold_x;
+    GstControlSource * cold_y;
+    int scale_ratio;
 
     bool feed_running;
 } CustomData;
@@ -47,9 +53,33 @@ bool gst_arm_buffer(const mlx90640::notable_pxls_t * const pix_list) {
     if (_data == NULL || _data->buffer == NULL)
         return false;
 
+
+    /*
+    GstClockTime overlay_time =
+        gst_clock_get_time(
+            gst_pipeline_get_clock(
+        	    GST_PIPELINE_CAST(_data->pipeline)
+            ) )
+        - GST_SECOND / 2;
+    */
+    // getting time: from gstappsrc source code
+    // https://gitlab.freedesktop.org/gstreamer/gst-plugins-base/blob/1.14.4/gst-libs/gst/app/gstappsrc.c
+    GstClock *clock = gst_element_get_clock (GST_ELEMENT_CAST (_data->app_source));
+    GstClockTime base_time =
+        gst_element_get_base_time (GST_ELEMENT_CAST (_data->app_source));
+    GstClockTime now = gst_clock_get_time (clock);
+    if (now > base_time)
+        now = now - base_time - 0.1 * GST_SECOND;
+    else
+        now = 0;
+    gst_object_unref (clock);
+    //g_print("=========old_now: %llu, now: %llu, base_time: %llu\n", old_now, now, base_time);
+
     /* Set the buffer's timestamp and duration - NOT */
     // http://gstreamer-devel.966125.n4.nabble.com/How-do-you-construct-the-timestamps-duration-for-video-audio-appsrc-when-captured-by-DeckLink-tp4675678p4675748.html
     // You set do-timestamp to true.
+    GST_BUFFER_DTS(_data->buffer) = now;
+    GST_BUFFER_PTS(_data->buffer) = now;
 
     /* TODO: Ideally, we can start & stop the camera,
      * but let's just discard *ALL* the data for the time being */
@@ -71,7 +101,48 @@ bool gst_arm_buffer(const mlx90640::notable_pxls_t * const pix_list) {
             g_string_new(overlay_str)
         )
     );
+    GST_BUFFER_DTS(txtbuf) = now;
+    GST_BUFFER_PTS(txtbuf) = now;
 
+    /* Set the indicator coordinate */
+    g_object_set (_data->gl_overlay_hot,
+                "location", "18231_rgb.png",
+                "offset_x", _data->scale_ratio * (*pix_list)[mlx90640::MAX_T].x,
+                "offset_y", _data->scale_ratio * (*pix_list)[mlx90640::MAX_T].y,
+                NULL);
+    g_object_set (_data->gl_overlay_cold,
+                "location", "18231_blue.png",
+                "offset_x", _data->scale_ratio * (*pix_list)[mlx90640::MIN_T].x,
+                "offset_y", _data->scale_ratio * (*pix_list)[mlx90640::MIN_T].y,
+                NULL);
+/*
+    GstClockTime slight_future = now + GST_SECOND / 20;
+    GstClockTime slight_past = now - GST_SECOND / 20;
+    GstTimedValueControlSource *tv_hx = (GstTimedValueControlSource *) _data->hot_x;
+    GstTimedValueControlSource *tv_hy = (GstTimedValueControlSource *) _data->hot_y;
+    GstTimedValueControlSource *tv_cx = (GstTimedValueControlSource *) _data->cold_x;
+    GstTimedValueControlSource *tv_cy = (GstTimedValueControlSource *) _data->cold_y;
+
+    gst_timed_value_control_source_set(tv_hx, slight_past, 0);
+    gst_timed_value_control_source_set(tv_hy, slight_past, 0);
+    gst_timed_value_control_source_set(tv_cx, slight_past, 0);
+    gst_timed_value_control_source_set(tv_cy, slight_past, 0);
+
+    gst_timed_value_control_source_set(tv_hx, now, _data->scale_ratio * (*pix_list)[mlx90640::MAX_T].x);
+    gst_timed_value_control_source_set(tv_hy, now, _data->scale_ratio * (*pix_list)[mlx90640::MAX_T].y);
+    gst_timed_value_control_source_set(tv_cx, now, _data->scale_ratio * (*pix_list)[mlx90640::MIN_T].x);
+    gst_timed_value_control_source_set(tv_cy, now, _data->scale_ratio * (*pix_list)[mlx90640::MIN_T].y);
+
+    //gst_timed_value_control_source_set(tv_hx, now, 0);
+    //gst_timed_value_control_source_set(tv_hy, now, 0);
+    //gst_timed_value_control_source_set(tv_cx, now, 0);
+    //gst_timed_value_control_source_set(tv_cy, now, 0);
+
+    gst_timed_value_control_source_set(tv_hx, slight_future, _data->scale_ratio * (*pix_list)[mlx90640::MAX_T].x);
+    gst_timed_value_control_source_set(tv_hy, slight_future, _data->scale_ratio * (*pix_list)[mlx90640::MAX_T].y);
+    gst_timed_value_control_source_set(tv_cx, slight_future, _data->scale_ratio * (*pix_list)[mlx90640::MIN_T].x);
+    gst_timed_value_control_source_set(tv_cy, slight_future, _data->scale_ratio * (*pix_list)[mlx90640::MIN_T].y);
+*/
     /* Push the buffer into the appsrc */
     ret = gst_app_src_push_buffer((GstAppSrc *)(_data->app_source), _data->buffer);
     _data->buffer = NULL;
@@ -133,6 +204,7 @@ int gst_init_(int scale_type, int scale_ratio) {
     memset (&data, 0, sizeof (data));
     data.buffer = NULL;
     data.feed_running = false;
+    data.scale_ratio = scale_ratio;
 
     /* Initialize GStreamer */
     gst_init (NULL, NULL);
@@ -145,7 +217,10 @@ int gst_init_(int scale_type, int scale_ratio) {
     data.gl_upload = gst_element_factory_make("glupload", "gl_upload");
     data.gl_colorconvert = gst_element_factory_make("glcolorconvert", "gl_colorconvert");
     data.gl_effects_heat = gst_element_factory_make("gleffects_heat", "gl_effects_heat");
-    data.gl_overlay = gst_element_factory_make("gloverlay", "gl_overlay");
+
+    data.gl_overlay_center = gst_element_factory_make("gloverlay", "gl_overlay_center");
+    data.gl_overlay_hot = gst_element_factory_make("gloverlay", "gl_overlay_hot");
+    data.gl_overlay_cold = gst_element_factory_make("gloverlay", "gl_overlay_cold");
 
     data.app_src_txt = gst_element_factory_make ("appsrc", "app_src_text");
     data.text_overlay = gst_element_factory_make("textoverlay", "text_overlay");
@@ -155,7 +230,8 @@ int gst_init_(int scale_type, int scale_ratio) {
     data.pipeline = gst_pipeline_new ("test-pipeline");
 
     if (!data.pipeline || !data.app_source || !data.video_scale || !data.caps_filter ||
-            !data.gl_upload || !data.gl_colorconvert || !data.gl_effects_heat || !data.gl_overlay ||
+            !data.gl_upload || !data.gl_colorconvert || !data.gl_effects_heat ||
+            !data.gl_overlay_center || !data.gl_overlay_hot || !data.gl_overlay_cold ||
             !data.app_src_txt || !data.text_overlay || !data.gl_imagesink) {
         g_printerr ("Not all elements could be created.\n");
         return -1;
@@ -170,7 +246,7 @@ int gst_init_(int scale_type, int scale_ratio) {
                     "caps", video_caps,
                     "format", GST_FORMAT_TIME,
                     "stream-type", GST_APP_STREAM_TYPE_STREAM,
-                    "do-timestamp", true,
+                    "do-timestamp", false,
                     //"min-latency", GST_SECOND / 4/* fps */,
                     "is-live", true,
                     NULL);
@@ -194,13 +270,29 @@ int gst_init_(int scale_type, int scale_ratio) {
             NULL);
 
     /* Configure gloverlay */
+    // Center
     //location=./18231_rgb.png overlay-width=16 overlay-height=16 relative-x=0.5 relative-y=0.5
-    g_object_set (data.gl_overlay,
-            "location", "18231_rgb.png",
+    g_object_set (data.gl_overlay_center,
+            "location", "18231_gray.png",
             "overlay-width", scale_ratio,
             "overlay-height", scale_ratio,
             "relative-x", 0.5,
             "relative-y", 0.5,
+            "name", "CH_center",
+            NULL);
+
+    // Hot and cold
+    g_object_set (data.gl_overlay_hot,
+            "location", "18231_rgb.png",
+            "overlay-width", scale_ratio,
+            "overlay-height", scale_ratio,
+            "name", "CH_hot",
+            NULL);
+    g_object_set (data.gl_overlay_cold,
+            "location", "18231_blue.png",
+            "overlay-width", scale_ratio,
+            "overlay-height", scale_ratio,
+            "name", "CH_cold",
             NULL);
 
     /* Configure app_src_txt */
@@ -211,9 +303,9 @@ int gst_init_(int scale_type, int scale_ratio) {
                     "caps", text_caps,
                     "format", GST_FORMAT_TIME,
                     "stream-type", GST_APP_STREAM_TYPE_STREAM,
-                    "do-timestamp", true,
+                    "do-timestamp", false,
                     //"min-latency", GST_SECOND / 4/* fps */,
-                    "is-live", true,
+                    "is-live", false,
                     NULL);
 
     /* Configure textoverlay */
@@ -224,14 +316,55 @@ int gst_init_(int scale_type, int scale_ratio) {
             "halignment", 2,
             NULL);
 
+    /* Dynamic parameters */
+    //data.hot_x = gst_trigger_control_source_new();
+    data.hot_x = gst_interpolation_control_source_new();
+    gst_object_add_control_binding(
+        GST_OBJECT_CAST(data.gl_overlay_hot),
+        gst_direct_control_binding_new_absolute(
+            GST_OBJECT_CAST(data.gl_overlay_hot), "offset-x", data.hot_x
+        ) );
+    //data.hot_y = gst_trigger_control_source_new();
+    data.hot_y = gst_interpolation_control_source_new();
+    gst_object_add_control_binding(
+        GST_OBJECT_CAST(data.gl_overlay_hot),
+        gst_direct_control_binding_new_absolute(
+            GST_OBJECT_CAST(data.gl_overlay_hot), "offset-y", data.hot_y
+        ) );
+
+    data.cold_x = gst_interpolation_control_source_new();
+    gst_object_add_control_binding(
+        GST_OBJECT_CAST(data.gl_overlay_cold),
+        gst_direct_control_binding_new_absolute(
+            GST_OBJECT_CAST(data.gl_overlay_cold), "offset-x", data.cold_x
+        ) );
+    data.cold_y = gst_interpolation_control_source_new();
+    gst_object_add_control_binding(
+        GST_OBJECT_CAST(data.gl_overlay_cold),
+        gst_direct_control_binding_new_absolute(
+            GST_OBJECT_CAST(data.gl_overlay_hot), "offset-y", data.cold_y
+        ) );
+
+
+    //GstTimedValueControlSource *tv_cx = (GstTimedValueControlSource *) _data->hot_x;
+    //GstTimedValueControlSource *tv_cy = (GstTimedValueControlSource *) _data->hot_y;
+    //gst_timed_value_control_source_set(tv_cx, 0.0, _data->scale_ratio * (*pix_list)[mlx90640::MIN_T].x);
+    //gst_timed_value_control_source_set(tv_cy, 0.0, _data->scale_ratio * (*pix_list)[mlx90640::MIN_T].y);
+    //gst_timed_value_control_source_set(tv_cx, 0, 0);
+    //gst_timed_value_control_source_set(tv_cy, 0, 0);
+    //gst_timed_value_control_source_set(tv_cx, 5 * GST_SECOND, 30);
+    //gst_timed_value_control_source_set(tv_cy, 5 * GST_SECOND, 30);
+
     /* Link all elements because they have "Always" pads */
     gst_bin_add_many (GST_BIN (data.pipeline),
             data.app_source, data.video_scale, data.caps_filter,
-            data.gl_upload, data.gl_colorconvert, data.gl_effects_heat, data.gl_overlay,
+            data.gl_upload, data.gl_colorconvert, data.gl_effects_heat,
+            data.gl_overlay_center, data.gl_overlay_hot, data.gl_overlay_cold,
             data.app_src_txt, data.text_overlay, data.gl_imagesink, NULL);
     if (gst_element_link_many (
             data.app_source, data.video_scale, data.caps_filter,
-            data.gl_upload, data.gl_colorconvert, data.gl_effects_heat, data.gl_overlay,
+            data.gl_upload, data.gl_colorconvert, data.gl_effects_heat,
+            data.gl_overlay_center, data.gl_overlay_hot, data.gl_overlay_cold,
             data.text_overlay, data.gl_imagesink, NULL) != TRUE ||
         gst_element_link(data.app_src_txt, data.text_overlay) != TRUE
             ) {
@@ -239,18 +372,7 @@ int gst_init_(int scale_type, int scale_ratio) {
         gst_object_unref (data.pipeline);
         return -1;
     }
-/*
-    // Dynamic parameters
-    // The subsystem cannot control string. Preserving this part to reuse later
-    //for temperature cursor
-    data.csource = gst_interpolation_control_source_new();
-    gst_object_add_control_binding(
-        GST_OBJECT_CAST(data.text_overlay),
-        gst_direct_control_binding_new_absolute(
-            GST_OBJECT_CAST(data.text_overlay), "text", data.csource
-        )
-    );
-*/
+
     /* Instruct the bus to emit signals for each received message, and connect to the interesting signals */
     bus = gst_element_get_bus (data.pipeline);
     gst_bus_add_signal_watch (bus);
@@ -272,6 +394,11 @@ void gst_cleanup(void) {
     CustomData &data = *_data;
     /* Free resources */
     gst_element_set_state (data.pipeline, GST_STATE_NULL);
+    //gst_control_point_free(_data->hot_x);
+    //gst_control_point_free(_data->hot_y);
+    //gst_control_point_free(_data->cold_x);
+    //gst_control_point_free(_data->cold_y);
+
     gst_object_unref (data.pipeline);
     delete(_data);
 }
